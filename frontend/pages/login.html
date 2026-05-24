@@ -1,1 +1,64 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BINGO // Вход</title>
+    <link rel="stylesheet" href="../css/styles.css" />
+  </head>
+  <body class="register-page">
+    <main class="auth-shell">
+      <section class="auth-scene auth-scene-login" aria-label="Вход в BINGO">
+        <div class="signal-panel" aria-hidden="true">
+          <span class="signal-line signal-line-a"></span>
+          <span class="signal-line signal-line-b"></span>
+          <span class="signal-line signal-line-c"></span>
+        </div>
 
+        <form class="auth-card" id="loginForm">
+          <div class="auth-kicker">BINGO NETWORK // RETURN ACCESS</div>
+          <h1 class="auth-title" data-text="Войти">Войти</h1>
+          <p class="auth-subtitle">
+            Вернись в сеть, забери токен доступа и продолжи игру.
+          </p>
+
+          <label class="field">
+            <span>Email</span>
+            <input
+              type="email"
+              name="email"
+              autocomplete="email"
+              placeholder="player@bingo.zone"
+              required
+            />
+          </label>
+
+          <label class="field">
+            <span>Password</span>
+            <input
+              type="password"
+              name="password"
+              autocomplete="current-password"
+              placeholder="••••••••"
+              minlength="6"
+              required
+            />
+          </label>
+
+          <button class="auth-button" type="submit">
+            <span>Получить доступ</span>
+          </button>
+
+          <p class="auth-message" id="loginMessage" aria-live="polite"></p>
+
+          <div class="auth-footer">
+            <span>Нет аккаунта?</span>
+            <a href="./register.html">Создать аккаунт</a>
+          </div>
+        </form>
+      </section>
+    </main>
+
+    <script src="../js/auth.js"></script>
+  </body>
+</html>

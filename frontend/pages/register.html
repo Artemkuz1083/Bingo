@@ -1,1 +1,75 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BINGO // Регистрация</title>
+    <link rel="stylesheet" href="../css/styles.css" />
+  </head>
+  <body class="register-page">
+    <main class="auth-shell">
+      <section class="auth-scene" aria-label="Регистрация в BINGO">
+        <div class="signal-panel" aria-hidden="true">
+          <span class="signal-line signal-line-a"></span>
+          <span class="signal-line signal-line-b"></span>
+          <span class="signal-line signal-line-c"></span>
+        </div>
 
+        <form class="auth-card" id="registerForm">
+          <div class="auth-kicker">BINGO NETWORK // ACCESS NODE</div>
+          <h1 class="auth-title" data-text="Создать аккаунт">Создать аккаунт</h1>
+          <p class="auth-subtitle">
+            Войди в систему, собери карточку и подключись к комнате.
+          </p>
+
+          <label class="field">
+            <span>Username</span>
+            <input
+              type="text"
+              name="username"
+              autocomplete="username"
+              placeholder="neon_player"
+              required
+            />
+          </label>
+
+          <label class="field">
+            <span>Email</span>
+            <input
+              type="email"
+              name="email"
+              autocomplete="email"
+              placeholder="player@bingo.zone"
+              required
+            />
+          </label>
+
+          <label class="field">
+            <span>Password</span>
+            <input
+              type="password"
+              name="password"
+              autocomplete="new-password"
+              placeholder="••••••••"
+              minlength="6"
+              required
+            />
+          </label>
+
+          <button class="auth-button" type="submit">
+            <span>Зарегистрироваться</span>
+          </button>
+
+          <p class="auth-message" id="registerMessage" aria-live="polite"></p>
+
+          <div class="auth-footer">
+            <span>Уже есть доступ?</span>
+            <a href="./login.html">Войти</a>
+          </div>
+        </form>
+      </section>
+    </main>
+
+    <script src="../js/auth.js"></script>
+  </body>
+</html>
