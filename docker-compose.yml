@@ -1,4 +1,66 @@
 services:
+  auth-service:
+    build:
+      context: ./auth-service
+    container_name: bingo-auth-service
+    environment:
+      SERVICE_NAME: auth-service
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@auth-postgres:5432/bingo_auth
+      JWT_SECRET_KEY: change-me
+      JWT_ALGORITHM: HS256
+      ACCESS_TOKEN_EXPIRE_MINUTES: 60
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672/
+      USER_EVENTS_EXCHANGE: user.events
+      USER_REGISTERED_ROUTING_KEY: user.registered
+      USER_REGISTERED_QUEUE: user-service.user-registered
+      CORS_ORIGINS: "*"
+    ports:
+      - "8001:8000"
+    depends_on:
+      auth-postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
+  user-service:
+    build:
+      context: ./user-service
+    container_name: bingo-user-service
+    environment:
+      SERVICE_NAME: user-service
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@user-postgres:5432/bingo_users
+      JWT_SECRET_KEY: change-me
+      JWT_ALGORITHM: HS256
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672/
+      USER_EVENTS_EXCHANGE: user.events
+      USER_REGISTERED_ROUTING_KEY: user.registered
+      USER_REGISTERED_QUEUE: user-service.user-registered
+    ports:
+      - "8002:8000"
+    depends_on:
+      user-postgres:
+        condition: service_healthy
+
+  user-worker:
+    build:
+      context: ./user-service
+    container_name: bingo-user-worker
+    command: ["python", "-m", "app.worker"]
+    environment:
+      SERVICE_NAME: user-service-worker
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@user-postgres:5432/bingo_users
+      JWT_SECRET_KEY: change-me
+      JWT_ALGORITHM: HS256
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672/
+      USER_EVENTS_EXCHANGE: user.events
+      USER_REGISTERED_ROUTING_KEY: user.registered
+      USER_REGISTERED_QUEUE: user-service.user-registered
+    depends_on:
+      user-postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
   auth-postgres:
     image: postgres:17-alpine
     container_name: bingo-auth-postgres
