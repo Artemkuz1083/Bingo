@@ -35,6 +35,7 @@ services:
       USER_EVENTS_EXCHANGE: user.events
       USER_REGISTERED_ROUTING_KEY: user.registered
       USER_REGISTERED_QUEUE: user-service.user-registered
+      CORS_ORIGINS: "*"
     ports:
       - "8002:8000"
     depends_on:
