@@ -1,0 +1,56 @@
+services:
+  auth-postgres:
+    image: postgres:17-alpine
+    container_name: bingo-auth-postgres
+    environment:
+      POSTGRES_DB: bingo_auth
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5433:5432"
+    volumes:
+      - auth_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d bingo_auth"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  user-postgres:
+    image: postgres:17-alpine
+    container_name: bingo-user-postgres
+    environment:
+      POSTGRES_DB: bingo_users
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5434:5432"
+    volumes:
+      - user_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d bingo_users"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  rabbitmq:
+    image: rabbitmq:4-management-alpine
+    container_name: bingo-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  auth_postgres_data:
+  user_postgres_data:
+  rabbitmq_data:

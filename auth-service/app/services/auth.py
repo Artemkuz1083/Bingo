@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.security import create_access_token, hash_password, verify_password
 from app.models.user import User
 from app.schemas.auth import AuthResponse, TokenResponse, UserLoginRequest, UserRegisterRequest
+from app.services.events import publish_user_registered
 
 
 async def register_user(
@@ -34,6 +35,7 @@ async def register_user(
     session.add(user)
     await session.commit()
     await session.refresh(user)
+    await publish_user_registered(user)
 
     return AuthResponse(
         user=user,

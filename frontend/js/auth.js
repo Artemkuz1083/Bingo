@@ -1,3 +1,6 @@
+const AUTH_API_URL = "http://127.0.0.1:8001";
+const HOME_PAGE_URL = "./home.html";
+
 const registerForm = document.querySelector("#registerForm");
 const registerMessage = document.querySelector("#registerMessage");
 const loginForm = document.querySelector("#loginForm");
@@ -9,8 +12,35 @@ function setFormMessage(element, text, type) {
   element.classList.add(type);
 }
 
+function saveAuthSession(authResponse) {
+  localStorage.setItem("bingo_access_token", authResponse.token.access_token);
+  localStorage.setItem("bingo_user", JSON.stringify(authResponse.user));
+}
+
+async function sendAuthRequest(path, payload) {
+  const response = await fetch(`${AUTH_API_URL}${path}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    throw new Error(data.detail || "Сервис авторизации вернул ошибку.");
+  }
+
+  return data;
+}
+
+function redirectHome() {
+  window.location.href = HOME_PAGE_URL;
+}
+
 if (registerForm && registerMessage) {
-  registerForm.addEventListener("submit", (event) => {
+  registerForm.addEventListener("submit", async (event) => {
     event.preventDefault();
 
     const formData = new FormData(registerForm);
@@ -27,16 +57,24 @@ if (registerForm && registerMessage) {
       return;
     }
 
-    setFormMessage(
-      registerMessage,
-      "Запрос регистрации готов к отправке в auth-service.",
-      "is-success",
-    );
+    try {
+      setFormMessage(registerMessage, "Создаем аккаунт...", "is-success");
+      const authResponse = await sendAuthRequest("/auth/register", {
+        username,
+        email,
+        password,
+      });
+      saveAuthSession(authResponse);
+      setFormMessage(registerMessage, "Аккаунт создан. Перенаправляем...", "is-success");
+      setTimeout(redirectHome, 450);
+    } catch (error) {
+      setFormMessage(registerMessage, error.message, "is-error");
+    }
   });
 }
 
 if (loginForm && loginMessage) {
-  loginForm.addEventListener("submit", (event) => {
+  loginForm.addEventListener("submit", async (event) => {
     event.preventDefault();
 
     const formData = new FormData(loginForm);
@@ -52,10 +90,17 @@ if (loginForm && loginMessage) {
       return;
     }
 
-    setFormMessage(
-      loginMessage,
-      "Запрос входа готов к отправке в auth-service.",
-      "is-success",
-    );
+    try {
+      setFormMessage(loginMessage, "Проверяем доступ...", "is-success");
+      const authResponse = await sendAuthRequest("/auth/login", {
+        email,
+        password,
+      });
+      saveAuthSession(authResponse);
+      setFormMessage(loginMessage, "Доступ подтвержден. Перенаправляем...", "is-success");
+      setTimeout(redirectHome, 450);
+    } catch (error) {
+      setFormMessage(loginMessage, error.message, "is-error");
+    }
   });
 }

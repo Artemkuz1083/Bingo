@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BINGO // Главная</title>
+    <link rel="stylesheet" href="../css/styles.css" />
+  </head>
+  <body class="register-page">
+    <main class="auth-shell">
+      <section class="auth-scene home-scene" aria-label="Главная страница BINGO">
+        <div class="signal-panel" aria-hidden="true">
+          <span class="signal-line signal-line-a"></span>
+          <span class="signal-line signal-line-b"></span>
+          <span class="signal-line signal-line-c"></span>
+        </div>
+
+        <article class="auth-card home-card">
+          <div class="auth-kicker">BINGO NETWORK // ONLINE</div>
+          <h1 class="auth-title" data-text="BINGO">BINGO</h1>
+          <p class="auth-subtitle" id="homeStatus">
+            Доступ получен. Главная страница пока пустая.
+          </p>
+
+          <div class="home-actions">
+            <a class="auth-button home-button" href="./login.html">
+              <span>Сменить аккаунт</span>
+            </a>
+          </div>
+        </article>
+      </section>
+    </main>
+
+    <script>
+      const user = JSON.parse(localStorage.getItem("bingo_user") || "null");
+      const status = document.querySelector("#homeStatus");
+
+      if (user && status) {
+        status.textContent = `Доступ получен: ${user.username}. Главная страница пока пустая.`;
+      }
+    </script>
+  </body>
+</html>

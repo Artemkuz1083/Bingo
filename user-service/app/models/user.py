@@ -10,6 +10,7 @@ class User(Base):
     __tablename__ = "users"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    auth_user_id: Mapped[int] = mapped_column(Integer, unique=True, index=True, nullable=False)
     username: Mapped[str] = mapped_column(String(50), unique=True, index=True, nullable=False)
     email: Mapped[str] = mapped_column(String(255), unique=True, index=True, nullable=False)
     balance: Mapped[float] = mapped_column(Numeric(10, 2), nullable=False, default=0)
