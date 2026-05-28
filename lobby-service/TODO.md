@@ -5,9 +5,10 @@
 
 ## auth-service
 
-- Сейчас пользователь временно передается через заголовок `X-User-Id`.
-- Потом надо заменить это на нормальный JWT от `auth-service`.
-- Нужно договориться, где в токене лежит `user_id` и как остальные сервисы будут проверять токен.
+- JWT уже появился в `auth-service`.
+- `user_id` лежит в claim `sub`.
+- `lobby-service` уже умеет читать `Authorization: Bearer <token>`.
+- Заголовок `X-User-Id` оставлен только как временный fallback для ручного тестирования, пока frontend полностью не перейдет на JWT.
 
 ## game-engine-service
 
@@ -35,5 +36,6 @@
 
 ## запуск проекта
 
-- Надо добавить общий запуск через docker-compose или другой вариант, чтобы поднимались PostgreSQL и нужные сервисы.
-- Еще надо согласовать переменные окружения для подключения к базе.
+- Общий `docker-compose.yml` уже появился.
+- `lobby-service` подключен к compose с отдельной PostgreSQL `bingo_lobby`.
+- Переменные для lobby: `DATABASE_URL`, `JWT_SECRET_KEY`, `JWT_ALGORITHM`, `CORS_ORIGINS`.
