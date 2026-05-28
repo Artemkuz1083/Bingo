@@ -25,3 +25,22 @@ class CardResponse(BaseModel):
     game_id: str
     user_id: str
     cells: list[list[CardCell]]
+    marked_numbers: list[int] = Field(default_factory=list)
+
+
+class MarkNumberRequest(BaseModel):
+    number: int = Field(ge=1, le=75)
+
+
+class MarkNumberResponse(BaseModel):
+    matched: bool
+    card: CardResponse
+
+
+class WinnerCheckData(BaseModel):
+    game_id: str
+    user_id: str
+    rows: list[list[CardCell]]
+    columns: list[list[CardCell]]
+    diagonals: list[list[CardCell]]
+    marked_numbers: list[int]

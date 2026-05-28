@@ -2,7 +2,7 @@ from typing import Any
 
 from app.core.config import settings
 from app.schemas.cards import CardResponse
-from app.services.cards import generate_card
+from app.services.cards import generate_card, mark_number
 
 
 class CardRepository:
@@ -33,3 +33,17 @@ class CardRepository:
 
         card = generate_card(game_id=game_id, user_id=user_id)
         return await self.save(card)
+
+    async def mark(
+        self,
+        game_id: str,
+        user_id: str,
+        number: int,
+    ) -> tuple[CardResponse | None, bool]:
+        card = await self.get(game_id=game_id, user_id=user_id)
+        if card is None:
+            return None, False
+
+        card, matched = mark_number(card=card, number=number)
+        await self.save(card)
+        return card, matched

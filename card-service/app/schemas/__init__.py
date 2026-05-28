@@ -1,4 +1,18 @@
-from app.schemas.cards import CardCell, CardPreviewRequest, CardResponse
+from app.schemas.cards import (
+    CardCell,
+    CardPreviewRequest,
+    CardResponse,
+    MarkNumberRequest,
+    MarkNumberResponse,
+    WinnerCheckData,
+)
 
 
-__all__ = ["CardCell", "CardPreviewRequest", "CardResponse"]
+__all__ = [
+    "CardCell",
+    "CardPreviewRequest",
+    "CardResponse",
+    "MarkNumberRequest",
+    "MarkNumberResponse",
+    "WinnerCheckData",
+]

@@ -1,6 +1,6 @@
 import random
 
-from app.schemas.cards import CardCell, CardResponse
+from app.schemas.cards import CardCell, CardResponse, WinnerCheckData
 
 
 BALL_RANGES = {
@@ -51,4 +51,44 @@ def generate_card(game_id: str, user_id: str) -> CardResponse:
             )
         rows.append(cells)
 
-    return CardResponse(game_id=game_id, user_id=user_id, cells=rows)
+    return CardResponse(
+        game_id=game_id,
+        user_id=user_id,
+        cells=rows,
+        marked_numbers=[],
+    )
+
+
+def mark_number(card: CardResponse, number: int) -> tuple[CardResponse, bool]:
+    matched = False
+    marked_numbers = set(card.marked_numbers)
+
+    for row in card.cells:
+        for cell in row:
+            if cell.number == number:
+                cell.marked = True
+                matched = True
+                marked_numbers.add(number)
+
+    card.marked_numbers = sorted(marked_numbers)
+    return card, matched
+
+
+def build_winner_check_data(card: CardResponse) -> WinnerCheckData:
+    columns = [
+        [card.cells[row][col] for row in range(5)]
+        for col in range(5)
+    ]
+    diagonals = [
+        [card.cells[index][index] for index in range(5)],
+        [card.cells[index][4 - index] for index in range(5)],
+    ]
+
+    return WinnerCheckData(
+        game_id=card.game_id,
+        user_id=card.user_id,
+        rows=card.cells,
+        columns=columns,
+        diagonals=diagonals,
+        marked_numbers=card.marked_numbers,
+    )

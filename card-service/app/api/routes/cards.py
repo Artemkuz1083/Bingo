@@ -3,8 +3,14 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from app.api.dependencies import get_card_repository
 from app.core.security import get_current_user_id
 from app.repositories.cards import CardRepository
-from app.schemas.cards import CardPreviewRequest, CardResponse
-from app.services.cards import generate_card
+from app.schemas.cards import (
+    CardPreviewRequest,
+    CardResponse,
+    MarkNumberRequest,
+    MarkNumberResponse,
+    WinnerCheckData,
+)
+from app.services.cards import build_winner_check_data, generate_card
 
 
 router = APIRouter(tags=["cards"])
@@ -42,3 +48,40 @@ async def get_my_card(
         )
 
     return card
+
+
+@router.post("/games/{game_id}/cards/me/marks", response_model=MarkNumberResponse)
+async def mark_drawn_number(
+    game_id: str,
+    payload: MarkNumberRequest,
+    user_id: str = Depends(get_current_user_id),
+    repository: CardRepository = Depends(get_card_repository),
+) -> MarkNumberResponse:
+    card, matched = await repository.mark(
+        game_id=game_id,
+        user_id=user_id,
+        number=payload.number,
+    )
+    if card is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Card not found",
+        )
+
+    return MarkNumberResponse(matched=matched, card=card)
+
+
+@router.get("/games/{game_id}/cards/me/winner-data", response_model=WinnerCheckData)
+async def get_winner_check_data(
+    game_id: str,
+    user_id: str = Depends(get_current_user_id),
+    repository: CardRepository = Depends(get_card_repository),
+) -> WinnerCheckData:
+    card = await repository.get(game_id=game_id, user_id=user_id)
+    if card is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Card not found",
+        )
+
+    return build_winner_check_data(card)
