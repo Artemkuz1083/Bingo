@@ -34,3 +34,10 @@ Set-ExecutionPolicy -Scope Process -ExecutionPolicy RemoteSigned
 & c:\dev\ucheba\Bingo\lobby-service\.venv\Scripts\Activate.ps1
 pytest
 ```
+
+## Integration endpoints
+
+- On `POST /rooms/{room_id}/start`, `lobby-service` changes ownership state only after calling `POST {LOBBY_GAME_ENGINE_SERVICE_URL}/game/{room_id}/start` when `LOBBY_GAME_ENGINE_SERVICE_URL` is configured.
+- The game engine payload contains `room_id` and `player_user_ids`.
+- `POST /internal/rooms/{room_id}/finish` lets another trusted service, for example `winner-service`, finish an active room.
+- Internal requests must include `X-Internal-Service-Token` matching `INTERNAL_SERVICE_TOKEN`.

@@ -4,7 +4,8 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.dependencies import get_current_user_id
+from app.dependencies import get_current_user_id, verify_internal_service_token
+from app.integrations import notify_game_started
 from app.models import Room, RoomStatus
 from app.schemas import PlayerResponse, PlayersResponse, RoomResponse
 from app.services import add_player, create_room, get_room, set_room_status
@@ -106,6 +107,8 @@ def start_room_endpoint(
             detail="Only waiting room can be started",
         )
 
+    notify_game_started(room)
+
     return serialize_room(set_room_status(db, room, RoomStatus.ACTIVE))
 
 
@@ -122,6 +125,26 @@ def finish_room_endpoint(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Only room host can finish the game",
         )
+
+    if room.status != RoomStatus.ACTIVE.value:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Only active room can be finished",
+        )
+
+    return serialize_room(set_room_status(db, room, RoomStatus.FINISHED))
+
+
+@router.post("/internal/rooms/{room_id}/finish", response_model=RoomResponse)
+def finish_room_from_service_endpoint(
+    room_id: UUID,
+    _: None = Depends(verify_internal_service_token),
+    db: Session = Depends(get_db),
+) -> RoomResponse:
+    room = load_room_or_404(db, room_id)
+
+    if room.status == RoomStatus.FINISHED.value:
+        return serialize_room(room)
 
     if room.status != RoomStatus.ACTIVE.value:
         raise HTTPException(
