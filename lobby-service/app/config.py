@@ -1,20 +1,17 @@
 import os
 
 
+def env_bool(name: str) -> bool:
+    return os.environ[name].lower() in {"1", "true", "yes"}
+
+
 class Settings:
-    service_name: str = os.getenv("SERVICE_NAME", "lobby-service")
-    database_url: str = os.getenv(
-        "DATABASE_URL",
-        "postgresql+psycopg://postgres:postgres@localhost:5432/lobby_service",
-    )
-    jwt_secret_key: str = os.getenv("JWT_SECRET_KEY", "change-me")
-    jwt_algorithm: str = os.getenv("JWT_ALGORITHM", "HS256")
-    cors_origins: str = os.getenv("CORS_ORIGINS", "*")
-    auto_create_tables: bool = os.getenv("AUTO_CREATE_TABLES", "true").lower() in {
-        "1",
-        "true",
-        "yes",
-    }
+    service_name: str = os.environ["SERVICE_NAME"]
+    database_url: str = os.environ["DATABASE_URL"]
+    jwt_secret_key: str = os.environ["JWT_SECRET_KEY"]
+    jwt_algorithm: str = os.environ["JWT_ALGORITHM"]
+    cors_origins: str = os.environ["CORS_ORIGINS"]
+    auto_create_tables: bool = env_bool("AUTO_CREATE_TABLES")
 
     @property
     def cors_origin_list(self) -> list[str]:

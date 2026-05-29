@@ -1,5 +1,5 @@
 
-const CARD_API_URL = "http://127.0.0.1:8000";
+const CARD_API_URL = "http://127.0.0.1:8004";
 
 const gameIdInput = document.querySelector("#gameIdInput");
 const createCardButton = document.querySelector("#createCardButton");

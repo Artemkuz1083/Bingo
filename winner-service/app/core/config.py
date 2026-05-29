@@ -4,26 +4,26 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    service_name: str = "winner-service"
-    jwt_secret_key: str = "change-me"
-    jwt_algorithm: str = "HS256"
-    cors_origins: str = "*"
+    service_name: str
+    jwt_secret_key: str
+    jwt_algorithm: str
+    cors_origins: str
 
-    rabbitmq_url: str = "amqp://guest:guest@localhost:5672/"
-    winner_claims_exchange: str = "winner.claims"
-    winner_claim_submitted_routing_key: str = "winner.claim.submitted"
-    winner_claims_queue: str = "winner-service.claims"
+    rabbitmq_url: str
+    winner_claims_exchange: str
+    winner_claim_submitted_routing_key: str
+    winner_claims_queue: str
 
-    redis_host: str = "localhost"
-    redis_port: int = 6379
-    redis_db: int = 0
-    redis_key_prefix: str = "bingo"
+    redis_host: str
+    redis_port: int
+    redis_db: int
+    redis_key_prefix: str
 
-    card_service_url: str = "http://localhost:8004"
-    game_engine_service_url: str = "http://localhost:8005"
-    user_service_url: str = "http://localhost:8002"
-    reward_amount: Decimal = Decimal("100")
-    http_timeout_seconds: float = 5.0
+    card_service_url: str
+    game_engine_service_url: str
+    user_service_url: str
+    reward_amount: Decimal
+    http_timeout_seconds: float
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 
