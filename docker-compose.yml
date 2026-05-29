@@ -62,17 +62,32 @@ services:
       rabbitmq:
         condition: service_healthy
 
+  frontend:
+    image: python:3.12-slim
+    container_name: bingo-frontend
+    working_dir: /app
+    command: ["python", "-m", "http.server", "8080", "--bind", "0.0.0.0"]
+    ports:
+      - "${FRONTEND_PORT}:8080"
+    volumes:
+      - ./frontend:/app:ro
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/pages/login.html').read()"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   lobby-service:
     build:
       context: ./lobby-service
     container_name: bingo-lobby-service
     environment:
-      SERVICE_NAME: lobby-service
-      DATABASE_URL: postgresql+psycopg://postgres:postgres@lobby-postgres:5432/bingo_lobby
-      JWT_SECRET_KEY: change-me
-      JWT_ALGORITHM: HS256
-      CORS_ORIGINS: "*"
-      AUTO_CREATE_TABLES: "true"
+      SERVICE_NAME: ${LOBBY_SERVICE_NAME}
+      DATABASE_URL: ${LOBBY_DATABASE_URL}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY}
+      JWT_ALGORITHM: ${JWT_ALGORITHM}
+      CORS_ORIGINS: ${CORS_ORIGINS}
+      AUTO_CREATE_TABLES: ${LOBBY_AUTO_CREATE_TABLES}
     ports:
       - "8003:8000"
     depends_on:
@@ -117,15 +132,15 @@ services:
     image: postgres:17-alpine
     container_name: bingo-lobby-postgres
     environment:
-      POSTGRES_DB: bingo_lobby
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: ${LOBBY_POSTGRES_DB}
+      POSTGRES_USER: ${LOBBY_POSTGRES_USER}
+      POSTGRES_PASSWORD: ${LOBBY_POSTGRES_PASSWORD}
     ports:
       - "5435:5432"
     volumes:
       - lobby_postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d bingo_lobby"]
+      test: ["CMD-SHELL", "pg_isready -U ${LOBBY_POSTGRES_USER} -d ${LOBBY_POSTGRES_DB}"]
       interval: 10s
       timeout: 5s
       retries: 5
