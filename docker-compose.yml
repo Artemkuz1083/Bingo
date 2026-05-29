@@ -4,16 +4,16 @@ services:
       context: ./auth-service
     container_name: bingo-auth-service
     environment:
-      SERVICE_NAME: auth-service
-      DATABASE_URL: postgresql+asyncpg://postgres:postgres@auth-postgres:5432/bingo_auth
-      JWT_SECRET_KEY: change-me
-      JWT_ALGORITHM: HS256
-      ACCESS_TOKEN_EXPIRE_MINUTES: 60
-      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672/
-      USER_EVENTS_EXCHANGE: user.events
-      USER_REGISTERED_ROUTING_KEY: user.registered
-      USER_REGISTERED_QUEUE: user-service.user-registered
-      CORS_ORIGINS: "*"
+      SERVICE_NAME: ${AUTH_SERVICE_NAME}
+      DATABASE_URL: ${AUTH_DATABASE_URL}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY}
+      JWT_ALGORITHM: ${JWT_ALGORITHM}
+      ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES}
+      RABBITMQ_URL: ${RABBITMQ_URL}
+      USER_EVENTS_EXCHANGE: ${USER_EVENTS_EXCHANGE}
+      USER_REGISTERED_ROUTING_KEY: ${USER_REGISTERED_ROUTING_KEY}
+      USER_REGISTERED_QUEUE: ${USER_REGISTERED_QUEUE}
+      CORS_ORIGINS: ${CORS_ORIGINS}
     ports:
       - "8001:8000"
     depends_on:
@@ -27,15 +27,15 @@ services:
       context: ./user-service
     container_name: bingo-user-service
     environment:
-      SERVICE_NAME: user-service
-      DATABASE_URL: postgresql+asyncpg://postgres:postgres@user-postgres:5432/bingo_users
-      JWT_SECRET_KEY: change-me
-      JWT_ALGORITHM: HS256
-      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672/
-      USER_EVENTS_EXCHANGE: user.events
-      USER_REGISTERED_ROUTING_KEY: user.registered
-      USER_REGISTERED_QUEUE: user-service.user-registered
-      CORS_ORIGINS: "*"
+      SERVICE_NAME: ${USER_SERVICE_NAME}
+      DATABASE_URL: ${USER_DATABASE_URL}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY}
+      JWT_ALGORITHM: ${JWT_ALGORITHM}
+      RABBITMQ_URL: ${RABBITMQ_URL}
+      USER_EVENTS_EXCHANGE: ${USER_EVENTS_EXCHANGE}
+      USER_REGISTERED_ROUTING_KEY: ${USER_REGISTERED_ROUTING_KEY}
+      USER_REGISTERED_QUEUE: ${USER_REGISTERED_QUEUE}
+      CORS_ORIGINS: ${CORS_ORIGINS}
     ports:
       - "8002:8000"
     depends_on:
@@ -48,14 +48,14 @@ services:
     container_name: bingo-user-worker
     command: ["python", "-m", "app.worker"]
     environment:
-      SERVICE_NAME: user-service-worker
-      DATABASE_URL: postgresql+asyncpg://postgres:postgres@user-postgres:5432/bingo_users
-      JWT_SECRET_KEY: change-me
-      JWT_ALGORITHM: HS256
-      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672/
-      USER_EVENTS_EXCHANGE: user.events
-      USER_REGISTERED_ROUTING_KEY: user.registered
-      USER_REGISTERED_QUEUE: user-service.user-registered
+      SERVICE_NAME: ${USER_WORKER_SERVICE_NAME}
+      DATABASE_URL: ${USER_DATABASE_URL}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY}
+      JWT_ALGORITHM: ${JWT_ALGORITHM}
+      RABBITMQ_URL: ${RABBITMQ_URL}
+      USER_EVENTS_EXCHANGE: ${USER_EVENTS_EXCHANGE}
+      USER_REGISTERED_ROUTING_KEY: ${USER_REGISTERED_ROUTING_KEY}
+      USER_REGISTERED_QUEUE: ${USER_REGISTERED_QUEUE}
     depends_on:
       user-postgres:
         condition: service_healthy
@@ -66,15 +66,15 @@ services:
     image: postgres:17-alpine
     container_name: bingo-auth-postgres
     environment:
-      POSTGRES_DB: bingo_auth
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: ${AUTH_POSTGRES_DB}
+      POSTGRES_USER: ${AUTH_POSTGRES_USER}
+      POSTGRES_PASSWORD: ${AUTH_POSTGRES_PASSWORD}
     ports:
       - "5433:5432"
     volumes:
       - auth_postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d bingo_auth"]
+      test: ["CMD-SHELL", "pg_isready -U ${AUTH_POSTGRES_USER} -d ${AUTH_POSTGRES_DB}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -83,15 +83,15 @@ services:
     image: postgres:17-alpine
     container_name: bingo-user-postgres
     environment:
-      POSTGRES_DB: bingo_users
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: ${USER_POSTGRES_DB}
+      POSTGRES_USER: ${USER_POSTGRES_USER}
+      POSTGRES_PASSWORD: ${USER_POSTGRES_PASSWORD}
     ports:
       - "5434:5432"
     volumes:
       - user_postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d bingo_users"]
+      test: ["CMD-SHELL", "pg_isready -U ${USER_POSTGRES_USER} -d ${USER_POSTGRES_DB}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -100,8 +100,8 @@ services:
     image: rabbitmq:4-management-alpine
     container_name: bingo-rabbitmq
     environment:
-      RABBITMQ_DEFAULT_USER: guest
-      RABBITMQ_DEFAULT_PASS: guest
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
     ports:
       - "5672:5672"
       - "15672:15672"
