@@ -405,6 +405,177 @@ a.auth-button {
   overflow-wrap: anywhere;
 }
 
+.game-page {
+  min-height: 100vh;
+}
+
+.game-shell {
+  min-height: 100vh;
+  padding: 34px 20px;
+}
+
+.game-board-layout {
+  width: min(100%, 1180px);
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 340px minmax(0, 1fr);
+  gap: 22px;
+  align-items: start;
+}
+
+.game-header {
+  grid-column: 1 / -1;
+  min-height: 84px;
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  align-items: center;
+  border-bottom: 1px solid rgba(156, 255, 0, 0.3);
+}
+
+.game-title {
+  margin: 0;
+  font-size: 44px;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.game-link {
+  color: var(--acid);
+  font-size: 13px;
+  font-weight: 900;
+  text-decoration: none;
+  text-transform: uppercase;
+}
+
+.game-panel {
+  background:
+    linear-gradient(145deg, rgba(255, 23, 77, 0.08), transparent 32%),
+    rgba(15, 5, 27, 0.86);
+  border: 1px solid rgba(156, 255, 0, 0.34);
+  box-shadow:
+    0 24px 80px rgba(0, 0, 0, 0.42),
+    inset 0 0 32px rgba(91, 19, 255, 0.14);
+}
+
+.game-control-panel {
+  padding: 22px;
+}
+
+.game-field {
+  margin-bottom: 14px;
+}
+
+.game-actions,
+.mark-form {
+  display: grid;
+  gap: 12px;
+}
+
+.mark-form {
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid rgba(156, 255, 0, 0.2);
+}
+
+.game-button {
+  min-height: 48px;
+  font-size: 13px;
+}
+
+.game-button-secondary {
+  color: var(--text);
+  background: linear-gradient(90deg, rgba(91, 19, 255, 0.96), rgba(255, 23, 77, 0.9));
+}
+
+.game-message {
+  margin-bottom: 0;
+}
+
+.bingo-card-panel {
+  padding: 20px;
+}
+
+.bingo-topline {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.bingo-card {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(58px, 1fr));
+  gap: 8px;
+}
+
+.bingo-letter,
+.bingo-cell {
+  aspect-ratio: 1;
+  min-width: 0;
+}
+
+.bingo-letter {
+  display: grid;
+  place-items: center;
+  color: #09020e;
+  font-size: 30px;
+  font-weight: 950;
+  background: linear-gradient(135deg, var(--acid), #fff05a);
+  box-shadow: 0 0 18px rgba(156, 255, 0, 0.34);
+}
+
+.bingo-cell {
+  display: grid;
+  place-items: center;
+  gap: 4px;
+  padding: 8px;
+  color: var(--text);
+  cursor: default;
+  background:
+    linear-gradient(145deg, rgba(91, 19, 255, 0.22), transparent),
+    rgba(5, 2, 10, 0.88);
+  border: 1px solid rgba(185, 169, 202, 0.28);
+  font: inherit;
+  transition:
+    border-color 180ms ease,
+    box-shadow 180ms ease,
+    transform 180ms ease;
+}
+
+.bingo-cell-letter {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.bingo-cell strong {
+  font-size: 22px;
+  line-height: 1;
+}
+
+.bingo-cell.is-marked {
+  color: #09020e;
+  background: linear-gradient(135deg, var(--acid), #fff05a 54%, var(--red));
+  border-color: rgba(255, 255, 255, 0.76);
+  box-shadow:
+    0 0 18px rgba(156, 255, 0, 0.46),
+    0 0 28px rgba(255, 23, 77, 0.24);
+  transform: translateY(-1px);
+}
+
+.bingo-cell.is-marked .bingo-cell-letter {
+  color: rgba(9, 2, 14, 0.72);
+}
+
+.bingo-cell.is-free strong {
+  font-size: 18px;
+}
+
 @keyframes scanDrift {
   0% {
     transform: translateX(-4%);
@@ -456,5 +627,45 @@ a.auth-button {
   .home-actions-grid,
   .profile-row {
     grid-template-columns: 1fr;
+  }
+
+  .game-shell {
+    padding: 22px 14px;
+  }
+
+  .game-board-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .game-header {
+    align-items: flex-start;
+    flex-direction: column;
+    padding-bottom: 18px;
+  }
+
+  .game-title {
+    font-size: 34px;
+  }
+
+  .bingo-card {
+    grid-template-columns: repeat(5, minmax(44px, 1fr));
+    gap: 6px;
+  }
+
+  .bingo-cell,
+  .bingo-letter {
+    min-height: 44px;
+  }
+
+  .bingo-letter {
+    font-size: 21px;
+  }
+
+  .bingo-cell strong {
+    font-size: 16px;
+  }
+
+  .bingo-cell-letter {
+    font-size: 9px;
   }
 }

@@ -1,1 +1,68 @@
 
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BINGO // Игра</title>
+    <link rel="stylesheet" href="../css/styles.css" />
+  </head>
+  <body class="register-page game-page">
+    <main class="game-shell">
+      <section class="game-board-layout" aria-label="Игровая зона BINGO">
+        <header class="game-header">
+          <div>
+            <div class="auth-kicker">BINGO NETWORK // GAME CARD</div>
+            <h1 class="game-title">Карточка игрока</h1>
+          </div>
+          <a class="game-link" href="./home.html">На главную</a>
+        </header>
+
+        <section class="game-panel game-control-panel" aria-label="Управление карточкой">
+          <label class="field game-field">
+            <span>Game ID</span>
+            <input id="gameIdInput" type="text" value="game-1" autocomplete="off" />
+          </label>
+
+          <div class="game-actions">
+            <button class="auth-button game-button" id="createCardButton" type="button">
+              <span>Создать / загрузить</span>
+            </button>
+            <button class="auth-button game-button game-button-secondary" id="previewCardButton" type="button">
+              <span>Предпросмотр</span>
+            </button>
+          </div>
+
+          <form class="mark-form" id="markForm">
+            <label class="field game-field">
+              <span>Выпавший номер</span>
+              <input id="markNumberInput" type="number" min="1" max="75" placeholder="Например 42" />
+            </label>
+            <button class="auth-button game-button" type="submit">
+              <span>Отметить</span>
+            </button>
+          </form>
+
+          <p class="auth-message game-message" id="gameMessage" aria-live="polite"></p>
+        </section>
+
+        <section class="game-panel bingo-card-panel" aria-label="BINGO карточка">
+          <div class="bingo-topline">
+            <span id="cardOwner">Игрок</span>
+            <span id="markedCounter">0 отмечено</span>
+          </div>
+
+          <div class="bingo-card" id="bingoCard" aria-label="Карточка BINGO">
+            <div class="bingo-letter">B</div>
+            <div class="bingo-letter">I</div>
+            <div class="bingo-letter">N</div>
+            <div class="bingo-letter">G</div>
+            <div class="bingo-letter">O</div>
+          </div>
+        </section>
+      </section>
+    </main>
+
+    <script src="../js/game.js"></script>
+  </body>
+</html>

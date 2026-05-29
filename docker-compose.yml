@@ -1,4 +1,17 @@
 services:
+  frontend:
+    image: nginx:1.27-alpine
+    container_name: bingo-frontend
+    volumes:
+      - ./frontend:/usr/share/nginx/html:ro
+    ports:
+      - "8081:80"
+    depends_on:
+      - card-service
+      - auth-service
+      - user-service
+      - lobby-service
+
   auth-service:
     build:
       context: ./auth-service
@@ -79,6 +92,24 @@ services:
       lobby-postgres:
         condition: service_healthy
 
+  card-service:
+    build:
+      context: ./card-service
+    container_name: bingo-card-service
+    environment:
+      SERVICE_NAME: card-service
+      REDIS_HOST: card-redis
+      REDIS_PORT: 6379
+      REDIS_DB: 0
+      REDIS_KEY_PREFIX: bingo
+      JWT_SECRET_KEY: change-me
+      JWT_ALGORITHM: HS256
+    ports:
+      - "8000:8000"
+    depends_on:
+      card-redis:
+        condition: service_healthy
+
   auth-postgres:
     image: postgres:17-alpine
     container_name: bingo-auth-postgres
@@ -147,8 +178,22 @@ services:
       timeout: 5s
       retries: 5
 
+  card-redis:
+    image: redis:7-alpine
+    container_name: bingo-card-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - card_redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
 volumes:
   auth_postgres_data:
   user_postgres_data:
   lobby_postgres_data:
   rabbitmq_data:
+  card_redis_data:
