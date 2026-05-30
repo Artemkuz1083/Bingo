@@ -135,7 +135,7 @@ def finish_room_endpoint(
 
 @router.post("/internal/rooms/{room_id}/finish", response_model=RoomResponse)
 def finish_room_from_service_endpoint(
-    room_id: UUID,
+    room_id: int,
     _: None = Depends(verify_internal_service_token),
     db: Session = Depends(get_db),
 ) -> RoomResponse:
