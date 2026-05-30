@@ -1,4 +1,6 @@
 import random
+from datetime import UTC, datetime
+from uuid import uuid4
 
 from app.schemas.cards import CardCell, CardResponse, WinnerCheckData
 
@@ -52,8 +54,10 @@ def generate_card(game_id: str, user_id: str) -> CardResponse:
         rows.append(cells)
 
     return CardResponse(
+        card_id=str(uuid4()),
         game_id=game_id,
         user_id=user_id,
+        created_at=datetime.now(UTC),
         cells=rows,
         marked_numbers=[],
     )
@@ -85,6 +89,7 @@ def build_winner_check_data(card: CardResponse) -> WinnerCheckData:
     ]
 
     return WinnerCheckData(
+        card_id=card.card_id,
         game_id=card.game_id,
         user_id=card.user_id,
         rows=card.cells,

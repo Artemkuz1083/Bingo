@@ -1,4 +1,3 @@
-
 <!doctype html>
 <html lang="ru">
   <head>
@@ -19,15 +18,28 @@
         </header>
 
         <section class="game-panel game-control-panel" aria-label="Управление карточкой">
-          <label class="field game-field">
+          <div class="game-id-box">
             <span>Game ID</span>
-            <input id="gameIdInput" type="text" value="game-1" autocomplete="off" />
-          </label>
+            <strong id="gameIdValue">Не выбрана</strong>
+          </div>
 
           <div class="game-actions">
             <button class="auth-button game-button" id="createCardButton" type="button">
-              <span>Создать / загрузить</span>
+              <span>Создать карточку</span>
             </button>
+          </div>
+
+          <form class="open-card-form" id="openCardForm">
+            <label class="field game-field">
+              <span>Открыть по Game ID</span>
+              <input id="openGameIdInput" type="number" min="1" step="1" placeholder="Например 1" />
+            </label>
+            <button class="auth-button game-button game-button-secondary" id="openCardButton" type="submit">
+              <span>Открыть карточку</span>
+            </button>
+          </form>
+
+          <div class="game-actions">
             <button class="auth-button game-button game-button-secondary" id="previewCardButton" type="button">
               <span>Предпросмотр</span>
             </button>

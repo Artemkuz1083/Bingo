@@ -124,12 +124,12 @@ def test_legacy_user_header_still_works(client):
 
 
 def test_unknown_room_returns_404(client):
-    response = client.get("/rooms/00000000-0000-0000-0000-000000000000")
+    response = client.get("/rooms/999")
 
     assert response.status_code == 404
 
 
 def test_invalid_room_id_returns_422(client):
-    response = client.get("/rooms/not-a-uuid")
+    response = client.get("/rooms/not-a-number")
 
     assert response.status_code == 422

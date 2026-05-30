@@ -5,12 +5,21 @@ from app.schemas.cards import CardResponse
 from app.services.cards import generate_card, mark_number
 
 
+CARD_TTL_SECONDS = 60 * 60 * 24
+
+
 class CardRepository:
     def __init__(self, redis_client: Any):
         self.redis_client = redis_client
 
     def key(self, game_id: str, user_id: str) -> str:
         return f"{settings.redis_key_prefix}:cards:{game_id}:{user_id}"
+
+    def card_key(self, card_id: str) -> str:
+        return f"{settings.redis_key_prefix}:card-history:{card_id}"
+
+    def history_key(self, game_id: str, user_id: str) -> str:
+        return f"{settings.redis_key_prefix}:card-history-index:{game_id}:{user_id}"
 
     async def get(self, game_id: str, user_id: str) -> CardResponse | None:
         raw_card = await self.redis_client.get(self.key(game_id, user_id))
@@ -19,11 +28,39 @@ class CardRepository:
 
         return CardResponse.model_validate_json(raw_card)
 
+    async def get_by_id(self, card_id: str) -> CardResponse | None:
+        raw_card = await self.redis_client.get(self.card_key(card_id))
+        if raw_card is None:
+            return None
+
+        return CardResponse.model_validate_json(raw_card)
+
+    async def get_history(self, game_id: str, user_id: str) -> list[CardResponse]:
+        card_ids = await self.redis_client.smembers(self.history_key(game_id, user_id))
+        cards: list[CardResponse] = []
+
+        for card_id in card_ids:
+            card = await self.get_by_id(card_id)
+            if card is not None:
+                cards.append(card)
+
+        return sorted(cards, key=lambda card: card.created_at)
+
     async def save(self, card: CardResponse) -> CardResponse:
+        payload = card.model_dump_json()
+
         await self.redis_client.set(
             self.key(card.game_id, card.user_id),
-            card.model_dump_json(),
+            payload,
+            ex=CARD_TTL_SECONDS,
         )
+        await self.redis_client.set(
+            self.card_key(card.card_id),
+            payload,
+            ex=CARD_TTL_SECONDS,
+        )
+        await self.redis_client.sadd(self.history_key(card.game_id, card.user_id), card.card_id)
+        await self.redis_client.expire(self.history_key(card.game_id, card.user_id), CARD_TTL_SECONDS)
         return card
 
     async def create(self, game_id: str, user_id: str) -> CardResponse:

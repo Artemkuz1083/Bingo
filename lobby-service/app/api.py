@@ -1,5 +1,3 @@
-from uuid import UUID
-
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
@@ -26,8 +24,8 @@ def serialize_room(room: Room) -> RoomResponse:
     )
 
 
-def load_room_or_404(db: Session, room_id: UUID) -> Room:
-    room = get_room(db, str(room_id))
+def load_room_or_404(db: Session, room_id: int) -> Room:
+    room = get_room(db, room_id)
     if room is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -47,7 +45,7 @@ def create_room_endpoint(
 
 @router.post("/rooms/{room_id}/join", response_model=RoomResponse)
 def join_room_endpoint(
-    room_id: UUID,
+    room_id: int,
     user_id: str = Depends(get_current_user_id),
     db: Session = Depends(get_db),
 ) -> RoomResponse:
@@ -64,7 +62,7 @@ def join_room_endpoint(
 
 @router.get("/rooms/{room_id}", response_model=RoomResponse)
 def get_room_endpoint(
-    room_id: UUID,
+    room_id: int,
     db: Session = Depends(get_db),
 ) -> RoomResponse:
     return serialize_room(load_room_or_404(db, room_id))
@@ -72,7 +70,7 @@ def get_room_endpoint(
 
 @router.get("/rooms/{room_id}/players", response_model=PlayersResponse)
 def get_room_players_endpoint(
-    room_id: UUID,
+    room_id: int,
     db: Session = Depends(get_db),
 ) -> PlayersResponse:
     room = load_room_or_404(db, room_id)
@@ -88,7 +86,7 @@ def get_room_players_endpoint(
 
 @router.post("/rooms/{room_id}/start", response_model=RoomResponse)
 def start_room_endpoint(
-    room_id: UUID,
+    room_id: int,
     user_id: str = Depends(get_current_user_id),
     db: Session = Depends(get_db),
 ) -> RoomResponse:
@@ -111,7 +109,7 @@ def start_room_endpoint(
 
 @router.post("/rooms/{room_id}/finish", response_model=RoomResponse)
 def finish_room_endpoint(
-    room_id: UUID,
+    room_id: int,
     user_id: str = Depends(get_current_user_id),
     db: Session = Depends(get_db),
 ) -> RoomResponse:

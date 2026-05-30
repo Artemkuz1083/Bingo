@@ -411,7 +411,7 @@ a.auth-button {
 
 .game-shell {
   min-height: 100vh;
-  padding: 34px 20px;
+  padding: 18px 20px;
 }
 
 .game-board-layout {
@@ -425,7 +425,7 @@ a.auth-button {
 
 .game-header {
   grid-column: 1 / -1;
-  min-height: 84px;
+  min-height: 62px;
   display: flex;
   justify-content: space-between;
   gap: 18px;
@@ -435,7 +435,7 @@ a.auth-button {
 
 .game-title {
   margin: 0;
-  font-size: 44px;
+  font-size: 38px;
   line-height: 1;
   text-transform: uppercase;
 }
@@ -466,12 +466,39 @@ a.auth-button {
   margin-bottom: 14px;
 }
 
+.game-id-box {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.game-id-box span {
+  color: rgba(246, 242, 255, 0.88);
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.game-id-box strong {
+  display: flex;
+  align-items: center;
+  min-height: 52px;
+  padding: 0 16px;
+  color: var(--text);
+  overflow-wrap: anywhere;
+  background: rgba(5, 2, 10, 0.78);
+  border: 1px solid rgba(156, 255, 0, 0.35);
+  box-shadow: inset 0 0 18px rgba(91, 19, 255, 0.18);
+}
+
 .game-actions,
+.open-card-form,
 .mark-form {
   display: grid;
   gap: 12px;
 }
 
+.open-card-form,
 .mark-form {
   margin-top: 18px;
   padding-top: 18px;
@@ -493,14 +520,14 @@ a.auth-button {
 }
 
 .bingo-card-panel {
-  padding: 20px;
+  padding: 16px;
 }
 
 .bingo-topline {
   display: flex;
   justify-content: space-between;
   gap: 16px;
-  margin-bottom: 16px;
+  margin-bottom: 12px;
   color: var(--muted);
   font-size: 13px;
   font-weight: 800;
@@ -510,20 +537,20 @@ a.auth-button {
 .bingo-card {
   display: grid;
   grid-template-columns: repeat(5, minmax(58px, 1fr));
-  gap: 8px;
+  gap: 7px;
 }
 
 .bingo-letter,
 .bingo-cell {
-  aspect-ratio: 1;
   min-width: 0;
 }
 
 .bingo-letter {
   display: grid;
   place-items: center;
+  height: clamp(52px, 7vh, 74px);
   color: #09020e;
-  font-size: 30px;
+  font-size: 26px;
   font-weight: 950;
   background: linear-gradient(135deg, var(--acid), #fff05a);
   box-shadow: 0 0 18px rgba(156, 255, 0, 0.34);
@@ -534,6 +561,7 @@ a.auth-button {
   place-items: center;
   gap: 4px;
   padding: 8px;
+  height: clamp(70px, 10vh, 94px);
   color: var(--text);
   cursor: default;
   background:
@@ -554,7 +582,7 @@ a.auth-button {
 }
 
 .bingo-cell strong {
-  font-size: 22px;
+  font-size: 20px;
   line-height: 1;
 }
 
@@ -573,7 +601,7 @@ a.auth-button {
 }
 
 .bingo-cell.is-free strong {
-  font-size: 18px;
+  font-size: 17px;
 }
 
 @keyframes scanDrift {

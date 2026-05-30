@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session, selectinload
 from app.models import Room, RoomPlayer, RoomStatus
 
 
-def get_room(db: Session, room_id: str) -> Room | None:
+def get_room(db: Session, room_id: int) -> Room | None:
     return db.scalar(
         select(Room)
         .where(Room.id == room_id)
@@ -23,7 +23,7 @@ def create_room(db: Session, host_user_id: str) -> Room:
     return get_room(db, room.id)
 
 
-def find_player(db: Session, room_id: str, user_id: str) -> RoomPlayer | None:
+def find_player(db: Session, room_id: int, user_id: str) -> RoomPlayer | None:
     return db.scalar(
         select(RoomPlayer).where(
             RoomPlayer.room_id == room_id,
