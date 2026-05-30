@@ -42,3 +42,25 @@ def get_current_user_id(
         )
 
     return x_user_id.strip()
+
+
+def verify_internal_service_token(
+    x_internal_service_token: str | None = Header(default=None),
+) -> None:
+    if not settings.internal_service_token:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Internal service token is not configured",
+        )
+
+    if x_internal_service_token is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Internal service token is required",
+        )
+
+    if x_internal_service_token != settings.internal_service_token:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Invalid internal service token",
+        )

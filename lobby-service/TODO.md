@@ -38,4 +38,12 @@
 
 - Общий `docker-compose.yml` уже появился.
 - `lobby-service` подключен к compose с отдельной PostgreSQL `bingo_lobby`.
-- Переменные для lobby: `DATABASE_URL`, `JWT_SECRET_KEY`, `JWT_ALGORITHM`, `CORS_ORIGINS`.
+- Переменные для lobby: `DATABASE_URL`, `JWT_SECRET_KEY`, `JWT_ALGORITHM`, `CORS_ORIGINS`, `LOBBY_GAME_ENGINE_SERVICE_URL`, `HTTP_TIMEOUT_SECONDS`, `INTERNAL_SERVICE_TOKEN`.
+
+## Current integration contract
+
+- When a host starts a room, `lobby-service` can notify game engine with `POST {LOBBY_GAME_ENGINE_SERVICE_URL}/game/{room_id}/start`.
+- The notification payload is `room_id` and `player_user_ids`.
+- `LOBBY_GAME_ENGINE_SERVICE_URL` is optional for now because the current compose file does not run a working `game-engine-service` container yet.
+- `winner-service` can finish an active room with `POST /internal/rooms/{room_id}/finish`.
+- This internal endpoint requires `X-Internal-Service-Token: <INTERNAL_SERVICE_TOKEN>`.

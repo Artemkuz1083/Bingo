@@ -81,6 +81,24 @@ def test_room_status_flow(client):
     assert finished.json()["status"] == "finished"
 
 
+def test_start_room_notifies_game_engine(client, monkeypatch):
+    room = create_room(client)
+    notified_room_ids = []
+
+    def fake_notify_game_started(room_model):
+        notified_room_ids.append(room_model.id)
+
+    monkeypatch.setattr("app.api.notify_game_started", fake_notify_game_started)
+
+    response = client.post(
+        f"/rooms/{room['id']}/start",
+        headers=auth_headers("host"),
+    )
+
+    assert response.status_code == 200
+    assert notified_room_ids == [room["id"]]
+
+
 def test_join_after_start_is_rejected(client):
     room = create_room(client)
     client.post(f"/rooms/{room['id']}/start", headers=auth_headers("host"))
@@ -108,6 +126,42 @@ def test_invalid_status_transitions_are_rejected(client):
         headers=auth_headers("host"),
     )
     assert start_again.status_code == 409
+
+
+def test_internal_finish_requires_service_token(client):
+    room = create_room(client)
+    client.post(f"/rooms/{room['id']}/start", headers=auth_headers("host"))
+
+    response = client.post(f"/internal/rooms/{room['id']}/finish")
+
+    assert response.status_code == 401
+
+
+def test_internal_finish_marks_active_room_finished(client):
+    room = create_room(client)
+    client.post(f"/rooms/{room['id']}/start", headers=auth_headers("host"))
+
+    response = client.post(
+        f"/internal/rooms/{room['id']}/finish",
+        headers={"X-Internal-Service-Token": "internal-test-token"},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["status"] == "finished"
+
+
+def test_internal_finish_is_idempotent_for_finished_room(client):
+    room = create_room(client)
+    client.post(f"/rooms/{room['id']}/start", headers=auth_headers("host"))
+    client.post(f"/rooms/{room['id']}/finish", headers=auth_headers("host"))
+
+    response = client.post(
+        f"/internal/rooms/{room['id']}/finish",
+        headers={"X-Internal-Service-Token": "internal-test-token"},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["status"] == "finished"
 
 
 def test_missing_user_header_is_unauthorized(client):

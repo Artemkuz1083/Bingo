@@ -7,6 +7,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
 os.environ["AUTO_CREATE_TABLES"] = "false"
+os.environ["INTERNAL_SERVICE_TOKEN"] = "internal-test-token"
 
 from app.database import Base, get_db
 from app.main import app
