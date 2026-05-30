@@ -1,2 +1,5 @@
 fastapi
 redis
+pydantic
+pydantic_settings
+uvicorn
