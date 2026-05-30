@@ -1,5 +1,6 @@
 const CARD_API_URL = "http://127.0.0.1:8000";
 const LOBBY_API_URL = "http://127.0.0.1:8003";
+const LOGIN_PAGE_URL = "./login.html";
 
 const gameIdValue = document.querySelector("#gameIdValue");
 const createCardButton = document.querySelector("#createCardButton");
@@ -15,6 +16,7 @@ const markedCounter = document.querySelector("#markedCounter");
 
 let currentCard = null;
 let currentGameId = resolveGameId();
+let createInProgress = false;
 
 function getToken() {
   return localStorage.getItem("bingo_access_token");
@@ -22,6 +24,11 @@ function getToken() {
 
 function getUser() {
   return JSON.parse(localStorage.getItem("bingo_user") || "null");
+}
+
+function clearAuthSession() {
+  localStorage.removeItem("bingo_access_token");
+  localStorage.removeItem("bingo_user");
 }
 
 function setGameMessage(text, type = "is-success") {
@@ -77,7 +84,7 @@ function getAuthHeaders() {
   const token = getToken();
 
   if (!token) {
-    throw new Error("Для сохранения и открытия карточки нужен вход в аккаунт. Без входа доступен только предпросмотр.");
+    throw new Error("Нужно войти в аккаунт, чтобы создать или открыть карточку.");
   }
 
   return { Authorization: `Bearer ${token}` };
@@ -85,6 +92,11 @@ function getAuthHeaders() {
 
 async function readResponse(response) {
   const data = await response.json().catch(() => ({}));
+
+  if (response.status === 401) {
+    clearAuthSession();
+    throw new Error("Сессия истекла. Войди заново.");
+  }
 
   if (!response.ok) {
     throw new Error(data.detail || "Сервис вернул ошибку.");
@@ -186,6 +198,13 @@ function renderCard(card) {
 }
 
 createCardButton.addEventListener("click", async () => {
+  if (createInProgress) {
+    return;
+  }
+
+  createInProgress = true;
+  createCardButton.disabled = true;
+
   try {
     setGameMessage("Создаём комнату...");
     const room = await createRoom();
@@ -196,6 +215,9 @@ createCardButton.addEventListener("click", async () => {
     setGameMessage(`Карточка создана. Game ID: ${currentGameId}.`);
   } catch (error) {
     setGameMessage(error.message, "is-error");
+  } finally {
+    createInProgress = false;
+    createCardButton.disabled = false;
   }
 });
 
@@ -247,4 +269,4 @@ markForm.addEventListener("submit", async (event) => {
 });
 
 renderGameId();
-setGameMessage("Создай карточку или открой её по Game ID.");
+previewCardButton.click();
