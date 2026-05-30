@@ -1,4 +1,6 @@
+from datetime import UTC, datetime
 from typing import Literal
+from uuid import uuid4
 
 from pydantic import BaseModel, Field
 
@@ -22,8 +24,10 @@ class CardCell(BaseModel):
 
 
 class CardResponse(BaseModel):
+    card_id: str = Field(default_factory=lambda: str(uuid4()))
     game_id: str
     user_id: str
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     cells: list[list[CardCell]]
     marked_numbers: list[int] = Field(default_factory=list)
 
@@ -38,6 +42,7 @@ class MarkNumberResponse(BaseModel):
 
 
 class WinnerCheckData(BaseModel):
+    card_id: str
     game_id: str
     user_id: str
     rows: list[list[CardCell]]

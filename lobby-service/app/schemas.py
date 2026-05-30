@@ -9,7 +9,7 @@ class PlayerResponse(BaseModel):
 
 
 class RoomResponse(BaseModel):
-    id: str
+    id: int
     host_user_id: str
     status: str
     players: list[PlayerResponse]
@@ -18,5 +18,5 @@ class RoomResponse(BaseModel):
 
 
 class PlayersResponse(BaseModel):
-    room_id: str
+    room_id: int
     players: list[PlayerResponse]

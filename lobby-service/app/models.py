@@ -1,8 +1,7 @@
 from datetime import datetime
 from enum import Enum
-from uuid import uuid4
 
-from sqlalchemy import DateTime, ForeignKey, String, UniqueConstraint, func
+from sqlalchemy import DateTime, ForeignKey, Integer, String, UniqueConstraint, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
@@ -17,11 +16,7 @@ class RoomStatus(str, Enum):
 class Room(Base):
     __tablename__ = "rooms"
 
-    id: Mapped[str] = mapped_column(
-        String(36),
-        primary_key=True,
-        default=lambda: str(uuid4()),
-    )
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     host_user_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
     status: Mapped[str] = mapped_column(
         String(16),
@@ -55,8 +50,8 @@ class RoomPlayer(Base):
     )
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    room_id: Mapped[str] = mapped_column(
-        String(36),
+    room_id: Mapped[int] = mapped_column(
+        Integer,
         ForeignKey("rooms.id", ondelete="CASCADE"),
         nullable=False,
         index=True,

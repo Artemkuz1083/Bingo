@@ -50,6 +50,15 @@ async def get_my_card(
     return card
 
 
+@router.get("/games/{game_id}/cards/me/history", response_model=list[CardResponse])
+async def get_my_cards_history(
+    game_id: str,
+    user_id: str = Depends(get_current_user_id),
+    repository: CardRepository = Depends(get_card_repository),
+) -> list[CardResponse]:
+    return await repository.get_history(game_id=game_id, user_id=user_id)
+
+
 @router.post("/games/{game_id}/cards/me/marks", response_model=MarkNumberResponse)
 async def mark_drawn_number(
     game_id: str,

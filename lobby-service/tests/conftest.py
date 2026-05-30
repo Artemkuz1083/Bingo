@@ -6,8 +6,15 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
-os.environ["AUTO_CREATE_TABLES"] = "false"
-os.environ["INTERNAL_SERVICE_TOKEN"] = "internal-test-token"
+os.environ.setdefault("SERVICE_NAME", "lobby-service-test")
+os.environ.setdefault("DATABASE_URL", "sqlite://")
+os.environ.setdefault("JWT_SECRET_KEY", "change-me")
+os.environ.setdefault("JWT_ALGORITHM", "HS256")
+os.environ.setdefault("CORS_ORIGINS", "*")
+os.environ.setdefault("AUTO_CREATE_TABLES", "false")
+os.environ.setdefault("LOBBY_GAME_ENGINE_SERVICE_URL", "")
+os.environ.setdefault("HTTP_TIMEOUT_SECONDS", "5")
+os.environ.setdefault("INTERNAL_SERVICE_TOKEN", "internal-test-token")
 
 from app.database import Base, get_db
 from app.main import app

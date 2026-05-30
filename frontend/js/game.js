@@ -1,8 +1,10 @@
+const CARD_API_URL = "http://127.0.0.1:8000";
+const LOBBY_API_URL = "http://127.0.0.1:8003";
 
-const CARD_API_URL = "http://127.0.0.1:8004";
-
-const gameIdInput = document.querySelector("#gameIdInput");
+const gameIdValue = document.querySelector("#gameIdValue");
 const createCardButton = document.querySelector("#createCardButton");
+const openCardForm = document.querySelector("#openCardForm");
+const openGameIdInput = document.querySelector("#openGameIdInput");
 const previewCardButton = document.querySelector("#previewCardButton");
 const markForm = document.querySelector("#markForm");
 const markNumberInput = document.querySelector("#markNumberInput");
@@ -12,6 +14,7 @@ const cardOwner = document.querySelector("#cardOwner");
 const markedCounter = document.querySelector("#markedCounter");
 
 let currentCard = null;
+let currentGameId = resolveGameId();
 
 function getToken() {
   return localStorage.getItem("bingo_access_token");
@@ -27,15 +30,54 @@ function setGameMessage(text, type = "is-success") {
   gameMessage.classList.add(type);
 }
 
+function isNumericId(value) {
+  return /^[1-9]\d*$/.test(String(value).trim());
+}
+
+function resolveGameId() {
+  const params = new URLSearchParams(window.location.search);
+  const urlGameId = params.get("game_id");
+  const storedGameId = localStorage.getItem("bingo_game_id");
+  const gameId = String(urlGameId || storedGameId || "").trim();
+
+  return isNumericId(gameId) ? gameId : "";
+}
+
+function renderGameId() {
+  gameIdValue.textContent = currentGameId || "Не выбрана";
+  openGameIdInput.value = currentGameId;
+}
+
+function syncGameId(gameId) {
+  const nextGameId = String(gameId || "").trim();
+
+  if (!isNumericId(nextGameId)) {
+    return;
+  }
+
+  currentGameId = nextGameId;
+  localStorage.setItem("bingo_game_id", currentGameId);
+
+  const url = new URL(window.location.href);
+  url.searchParams.set("game_id", currentGameId);
+  window.history.replaceState(null, "", url);
+
+  renderGameId();
+}
+
 function getGameId() {
-  return gameIdInput.value.trim() || "game-1";
+  if (!currentGameId) {
+    throw new Error("Сначала создай карточку или введи Game ID.");
+  }
+
+  return currentGameId;
 }
 
 function getAuthHeaders() {
   const token = getToken();
 
   if (!token) {
-    throw new Error("Для сохранения карточки нужен вход в аккаунт. Используй предпросмотр без токена.");
+    throw new Error("Для сохранения и открытия карточки нужен вход в аккаунт. Без входа доступен только предпросмотр.");
   }
 
   return { Authorization: `Bearer ${token}` };
@@ -45,13 +87,22 @@ async function readResponse(response) {
   const data = await response.json().catch(() => ({}));
 
   if (!response.ok) {
-    throw new Error(data.detail || "Card service вернул ошибку.");
+    throw new Error(data.detail || "Сервис вернул ошибку.");
   }
 
   return data;
 }
 
-async function createOrLoadCard() {
+async function createRoom() {
+  const response = await fetch(`${LOBBY_API_URL}/rooms`, {
+    method: "POST",
+    headers: getAuthHeaders(),
+  });
+
+  return readResponse(response);
+}
+
+async function createCard() {
   const gameId = getGameId();
   const response = await fetch(`${CARD_API_URL}/games/${encodeURIComponent(gameId)}/cards/me`, {
     method: "POST",
@@ -61,8 +112,17 @@ async function createOrLoadCard() {
   return readResponse(response);
 }
 
-async function previewCard() {
+async function loadCard() {
   const gameId = getGameId();
+  const response = await fetch(`${CARD_API_URL}/games/${encodeURIComponent(gameId)}/cards/me`, {
+    method: "GET",
+    headers: getAuthHeaders(),
+  });
+
+  return readResponse(response);
+}
+
+async function previewCard() {
   const user = getUser();
   const response = await fetch(`${CARD_API_URL}/cards/preview`, {
     method: "POST",
@@ -70,7 +130,7 @@ async function previewCard() {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      game_id: gameId,
+      game_id: currentGameId || "preview",
       user_id: user?.id ? String(user.id) : "preview-player",
     }),
   });
@@ -94,6 +154,7 @@ async function markNumber(number) {
 
 function renderCard(card) {
   currentCard = card;
+  syncGameId(card.game_id);
   bingoCard.querySelectorAll(".bingo-cell").forEach((cell) => cell.remove());
 
   card.cells.flat().forEach((cell) => {
@@ -126,9 +187,32 @@ function renderCard(card) {
 
 createCardButton.addEventListener("click", async () => {
   try {
-    setGameMessage("Загружаем карточку...");
-    renderCard(await createOrLoadCard());
-    setGameMessage("Карточка готова.");
+    setGameMessage("Создаём комнату...");
+    const room = await createRoom();
+
+    syncGameId(room.id);
+    setGameMessage("Создаём карточку...");
+    renderCard(await createCard());
+    setGameMessage(`Карточка создана. Game ID: ${currentGameId}.`);
+  } catch (error) {
+    setGameMessage(error.message, "is-error");
+  }
+});
+
+openCardForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+
+  const gameId = openGameIdInput.value.trim();
+  if (!isNumericId(gameId)) {
+    setGameMessage("Введи числовой Game ID, например 1.", "is-error");
+    return;
+  }
+
+  try {
+    syncGameId(gameId);
+    setGameMessage("Открываем карточку...");
+    renderCard(await loadCard());
+    setGameMessage(`Карточка для Game ID ${currentGameId} открыта.`);
   } catch (error) {
     setGameMessage(error.message, "is-error");
   }
@@ -162,4 +246,5 @@ markForm.addEventListener("submit", async (event) => {
   }
 });
 
-previewCardButton.click();
+renderGameId();
+setGameMessage("Создай карточку или открой её по Game ID.");
