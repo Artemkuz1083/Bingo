@@ -1,4 +1,4 @@
-const USER_API_URL = "http://127.0.0.1:8002";
+const USER_API_URL = "";
 const LOGIN_PAGE_URL = "./login.html";
 
 const profileStatus = document.querySelector("#profileStatus");
@@ -7,6 +7,25 @@ const profileEmail = document.querySelector("#profileEmail");
 const profileBalance = document.querySelector("#profileBalance");
 const profileAuthId = document.querySelector("#profileAuthId");
 const logoutButton = document.querySelector("#logoutButton");
+
+function readCachedUser() {
+  try {
+    return JSON.parse(localStorage.getItem("bingo_user") || "null");
+  } catch {
+    return null;
+  }
+}
+
+function renderProfile(data) {
+  if (!data) {
+    return;
+  }
+
+  profileUsername.textContent = data.username || "Нет данных";
+  profileEmail.textContent = data.email || "Нет данных";
+  profileBalance.textContent = `${data.balance ?? "0.00"}`;
+  profileAuthId.textContent = data.auth_user_id ?? data.id ?? "Нет данных";
+}
 
 function setProfileStatus(text, type = "is-success") {
   if (!profileStatus) {
@@ -32,6 +51,8 @@ async function loadProfile() {
     return;
   }
 
+  renderProfile(readCachedUser());
+
   try {
     const response = await fetch(`${USER_API_URL}/users/me`, {
       headers: {
@@ -45,10 +66,7 @@ async function loadProfile() {
       throw new Error(data.detail || "Не удалось загрузить профиль.");
     }
 
-    profileUsername.textContent = data.username;
-    profileEmail.textContent = data.email;
-    profileBalance.textContent = `${data.balance}`;
-    profileAuthId.textContent = data.auth_user_id;
+    renderProfile(data);
     localStorage.setItem("bingo_user", JSON.stringify(data));
     setProfileStatus("Сигнал профиля принят. Канал стабилен.");
   } catch (error) {

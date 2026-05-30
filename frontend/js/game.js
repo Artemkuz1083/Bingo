@@ -1,6 +1,6 @@
-const CARD_API_URL = "http://127.0.0.1:8004";
-const GAME_ENGINE_API_URL = "http://127.0.0.1:8005";
-const WINNER_API_URL = "http://127.0.0.1:8006";
+const CARD_API_URL = "";
+const GAME_ENGINE_API_URL = "";
+const WINNER_API_URL = "";
 
 const gameIdValue = document.querySelector("#gameIdValue");
 const cardActionButton = document.querySelector("#cardActionButton");

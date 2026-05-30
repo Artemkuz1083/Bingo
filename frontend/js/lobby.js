@@ -1,4 +1,4 @@
-const LOBBY_API_URL = "http://127.0.0.1:8003";
+const LOBBY_API_URL = "";
 const GAME_PAGE_URL = "./game.html";
 
 const createRoomButton = document.querySelector("#createRoomButton");

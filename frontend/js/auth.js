@@ -1,4 +1,4 @@
-const AUTH_API_URL = "http://127.0.0.1:8001";
+const AUTH_API_URL = "";
 const HOME_PAGE_URL = "./home.html";
 
 const registerForm = document.querySelector("#registerForm");

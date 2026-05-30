@@ -24,6 +24,14 @@ async def publish_user_registered(user: User) -> None:
                 aio_pika.ExchangeType.DIRECT,
                 durable=True,
             )
+            queue = await channel.declare_queue(
+                settings.user_registered_queue,
+                durable=True,
+            )
+            await queue.bind(
+                exchange,
+                routing_key=settings.user_registered_routing_key,
+            )
             await exchange.publish(
                 aio_pika.Message(
                     body=json.dumps(payload).encode("utf-8"),

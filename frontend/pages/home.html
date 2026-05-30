@@ -35,13 +35,7 @@
       </section>
     </main>
 
-    <script>
-      const user = JSON.parse(localStorage.getItem("bingo_user") || "null");
-      const status = document.querySelector("#homeStatus");
-
-      if (user && status) {
-        status.textContent = `${user.username}, выберите комнату и переходите к карточке.`;
-      }
-    </script>
+    <script src="../js/api.js?v=ngrok-2"></script>
+    <script src="../js/home.js?v=ngrok-2"></script>
   </body>
 </html>
