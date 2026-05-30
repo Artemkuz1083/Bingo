@@ -22,6 +22,8 @@ class Settings(BaseSettings):
     card_service_url: str
     game_engine_service_url: str
     user_service_url: str
+    lobby_service_url: str = ""
+    internal_service_token: str = ""
     reward_amount: Decimal
     http_timeout_seconds: float
 

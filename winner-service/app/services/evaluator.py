@@ -3,12 +3,18 @@ import re
 from app.schemas.winners import CardCell, WinnerCheckData
 
 
-def normalize_drawn_numbers(raw_balls: list[str | int]) -> set[int]:
+def normalize_drawn_numbers(raw_balls: list[str | int | dict]) -> set[int]:
     numbers: set[int] = set()
     for ball in raw_balls:
         if isinstance(ball, int):
             numbers.add(ball)
             continue
+        if isinstance(ball, dict):
+            number = ball.get("number")
+            if isinstance(number, int):
+                numbers.add(number)
+                continue
+            ball = ball.get("label", "")
 
         match = re.search(r"\d+", str(ball))
         if match is not None:
@@ -29,7 +35,7 @@ def is_winning_line(cells: list[CardCell], drawn_numbers: set[int]) -> bool:
     return all(is_cell_covered(cell, drawn_numbers) for cell in cells)
 
 
-def has_bingo(card: WinnerCheckData, drawn_balls: list[str | int]) -> bool:
+def has_bingo(card: WinnerCheckData, drawn_balls: list[str | int | dict]) -> bool:
     drawn_numbers = normalize_drawn_numbers(drawn_balls)
     lines = [*card.rows, *card.columns, *card.diagonals]
     return any(is_winning_line(line, drawn_numbers) for line in lines)

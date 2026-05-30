@@ -32,10 +32,7 @@ async def start_game(room_id: str, player_user_ids: list[str]) -> bool:
     if player_user_ids:
         await redis_client.rpush(key_players(room_id), *player_user_ids)
 
-    task = asyncio.create_task(
-        _draw_loop(room_id),
-        name=f"draw-loop-{room_id}",
-    )
+    task = asyncio.create_task(_draw_loop(room_id), name=f"draw-loop-{room_id}")
     _tasks[room_id] = task
     logger.info(f"Комната {room_id}: игра началась!")
     return True
@@ -83,7 +80,10 @@ async def get_state(room_id: str) -> dict:
         "player_user_ids": players,
     }
 
-async def _draw_loop(room_id: str, redis: aioredis.Redis):
+async def _draw_loop(room_id: str, redis: aioredis.Redis | None = None):
+    if redis is None:
+        redis = redis_client
+
     pool = build_shuffle_pool()
     interval = settings.draw_interval_seconds
 

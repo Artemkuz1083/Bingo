@@ -6,6 +6,7 @@ from app.services.evaluator import has_bingo
 from app.services.integrations import (
     fetch_game_state,
     fetch_winner_check_data,
+    finish_lobby_room,
     reward_winner,
 )
 from app.services.storage import WinnerStorage
@@ -56,6 +57,11 @@ async def process_winner_claim(
         reward_amount=settings.reward_amount,
         reward_status=reward_status,
     )
+    try:
+        await finish_lobby_room(payload.game_id)
+    except httpx.HTTPError:
+        pass
+
     await storage.update_claim(
         payload.claim_id,
         "won" if reward_status == "paid" else "reward_failed",

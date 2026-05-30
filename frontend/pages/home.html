@@ -18,16 +18,14 @@
         <article class="auth-card home-card">
           <div class="auth-kicker">BINGO NETWORK // ONLINE</div>
           <h1 class="auth-title" data-text="BINGO">BINGO</h1>
-          <p class="auth-subtitle" id="homeStatus">
-            Доступ получен. Главная страница пока пустая.
-          </p>
+          <p class="auth-subtitle" id="homeStatus">Выберите комнату и переходите к карточке.</p>
 
           <div class="home-actions home-actions-grid">
-            <a class="auth-button home-button" href="./game.html">
+            <a class="auth-button home-button" href="./lobby.html">
               <span>Играть</span>
             </a>
             <a class="auth-button home-button" href="./profile.html">
-              <span>Открыть профиль</span>
+              <span>Профиль</span>
             </a>
             <a class="auth-button home-button home-button-secondary" href="./login.html">
               <span>Сменить аккаунт</span>
@@ -42,7 +40,7 @@
       const status = document.querySelector("#homeStatus");
 
       if (user && status) {
-        status.textContent = `Доступ получен: ${user.username}. Главная страница пока пустая.`;
+        status.textContent = `${user.username}, выберите комнату и переходите к карточке.`;
       }
     </script>
   </body>

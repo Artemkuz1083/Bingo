@@ -4,7 +4,7 @@ class MessageResponse(BaseModel):
     message: str
 
 class StartGameRequest(BaseModel):
-    room_id: str
+    room_id: str | int
     player_user_ids: list[str]
 
 class BallResponse(BaseModel):

@@ -18,15 +18,22 @@ This is an educational Bingo project built as a set of microservices plus a simp
 - User id is stored in the JWT `sub` claim.
 - Protected service requests should use `Authorization: Bearer <token>`.
 - `lobby-service` owns room status transitions: `waiting`, `active`, `finished`.
+- `lobby-service` notifies `game-engine-service` when a host starts or finishes a room.
 - Other services can react to game events, but they should not directly own lobby room status.
 - `room_id` can be used as `game_id` unless the project later introduces a separate game id.
+- `winner-service` can finish a room through `lobby-service` internal endpoint after a valid winner claim.
 - Temporary local/manual testing may still use `X-User-Id` where a service supports it, but JWT is the primary contract.
 
 ## Ports
 
+- `frontend`: `8081`
+- `card-service`: `8000`
 - `auth-service`: `8001`
 - `user-service`: `8002`
 - `lobby-service`: `8003`
+- `game-engine-service`: `8004`
+- `winner-service`: `8006`
+- Redis: `6379`
 - RabbitMQ: `5672`, management UI `15672`
 
 ## Databases
@@ -46,8 +53,17 @@ This is an educational Bingo project built as a set of microservices plus a simp
 - returns room and player lists;
 - lets only the host start an active game;
 - lets only the host finish an active game;
+- calls `POST /game/{room_id}/start` on `game-engine-service` when a room starts;
+- calls `POST /game/{room_id}/stop` on `game-engine-service` when a room finishes;
 - reads JWT `sub` through `Authorization: Bearer <token>`;
 - still supports `X-User-Id` as a temporary fallback.
+
+## Frontend Flow
+
+- Main user flow is `home.html` -> `lobby.html` -> `game.html`.
+- Rooms are created or joined only from `lobby.html`.
+- The game page uses the selected `room_id` as `game_id` and creates/opens the player's card for that room.
+- The game page shows the latest ball from `game-engine-service` and refreshes it automatically.
 
 Run tests:
 

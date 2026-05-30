@@ -8,59 +8,18 @@
   </head>
   <body class="register-page game-page">
     <main class="game-shell">
-      <section class="game-board-layout" aria-label="Игровая зона BINGO">
+      <section class="game-board-layout simple-game-layout" aria-label="Игра BINGO">
         <header class="game-header">
           <div>
-            <div class="auth-kicker">BINGO NETWORK // GAME CARD</div>
-            <h1 class="game-title">Карточка игрока</h1>
+            <div class="auth-kicker">BINGO NETWORK // GAME</div>
+            <h1 class="game-title">Игра</h1>
           </div>
-          <a class="game-link" href="./home.html">На главную</a>
+          <a class="game-link" href="./lobby.html">Комната</a>
         </header>
 
-        <section class="game-panel game-control-panel" aria-label="Управление карточкой">
-          <div class="game-id-box">
-            <span>Game ID</span>
-            <strong id="gameIdValue">Не выбрана</strong>
-          </div>
-
-          <div class="game-actions">
-            <button class="auth-button game-button" id="createCardButton" type="button">
-              <span>Создать карточку</span>
-            </button>
-          </div>
-
-          <form class="open-card-form" id="openCardForm">
-            <label class="field game-field">
-              <span>Открыть по Game ID</span>
-              <input id="openGameIdInput" type="number" min="1" step="1" placeholder="Например 1" />
-            </label>
-            <button class="auth-button game-button game-button-secondary" id="openCardButton" type="submit">
-              <span>Открыть карточку</span>
-            </button>
-          </form>
-
-          <div class="game-actions">
-            <button class="auth-button game-button game-button-secondary" id="previewCardButton" type="button">
-              <span>Предпросмотр</span>
-            </button>
-          </div>
-
-          <form class="mark-form" id="markForm">
-            <label class="field game-field">
-              <span>Выпавший номер</span>
-              <input id="markNumberInput" type="number" min="1" max="75" placeholder="Например 42" />
-            </label>
-            <button class="auth-button game-button" type="submit">
-              <span>Отметить</span>
-            </button>
-          </form>
-
-          <p class="auth-message game-message" id="gameMessage" aria-live="polite"></p>
-        </section>
-
-        <section class="game-panel bingo-card-panel" aria-label="BINGO карточка">
+        <section class="game-panel bingo-card-panel" aria-label="Карточка BINGO">
           <div class="bingo-topline">
-            <span id="cardOwner">Игрок</span>
+            <span id="cardOwner">Карточка не создана</span>
             <span id="markedCounter">0 отмечено</span>
           </div>
 
@@ -72,6 +31,38 @@
             <div class="bingo-letter">O</div>
           </div>
         </section>
+
+        <aside class="game-panel game-control-panel simple-game-panel" aria-label="Действия">
+          <div class="game-id-box">
+            <span>Комната</span>
+            <strong id="gameIdValue">Не выбрана</strong>
+          </div>
+
+          <div class="simple-ball">
+            <em id="gameStatusValue">Ожидание</em>
+            <span>Последний шар</span>
+            <strong id="lastBallValue">...</strong>
+            <small id="drawnCountValue">0 выпало</small>
+          </div>
+
+          <button class="auth-button game-button" id="cardActionButton" type="button">
+            <span>Создать карточку</span>
+          </button>
+
+          <button class="auth-button game-button game-button-secondary" id="refreshStateButton" type="button">
+            <span>Обновить шар</span>
+          </button>
+
+          <button class="auth-button game-button" id="markLastBallButton" type="button" disabled>
+            <span>Отметить шар</span>
+          </button>
+
+          <button class="auth-button game-button game-button-secondary" id="claimBingoButton" type="button" disabled>
+            <span>BINGO</span>
+          </button>
+
+          <p class="auth-message game-message" id="gameMessage" aria-live="polite"></p>
+        </aside>
       </section>
     </main>
 

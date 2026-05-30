@@ -38,6 +38,12 @@ def test_normalize_drawn_numbers_accepts_labels_and_numbers() -> None:
     assert normalize_drawn_numbers(["B1", "I20", 33, "O75"]) == {1, 20, 33, 75}
 
 
+def test_normalize_drawn_numbers_accepts_game_engine_balls() -> None:
+    assert normalize_drawn_numbers(
+        [{"label": "B1", "number": 1}, {"label": "I20", "number": 20}]
+    ) == {1, 20}
+
+
 def test_has_bingo_detects_completed_row() -> None:
     assert has_bingo(build_card(), ["B1", "B2", "B3", "B4", "B5"])
 

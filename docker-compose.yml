@@ -11,6 +11,7 @@ services:
       - user-service
       - lobby-service
       - card-service
+      - game-engine-service
       - winner-service
 
   auth-service:
@@ -115,6 +116,26 @@ services:
       redis:
         condition: service_healthy
 
+  game-engine-service:
+    build:
+      context: ./game-engine-service
+    container_name: bingo-game-engine-service
+    environment:
+      SERVICE_NAME: ${GAME_ENGINE_SERVICE_NAME}
+      REDIS_HOST: ${REDIS_HOST}
+      REDIS_PORT: ${REDIS_PORT}
+      REDIS_DB: ${REDIS_DB}
+      REDIS_KEY_PREFIX: ${REDIS_KEY_PREFIX}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY}
+      JWT_ALGORITHM: ${JWT_ALGORITHM}
+      CORS_ORIGINS: ${CORS_ORIGINS}
+      DRAW_INTERVAL_SECONDS: ${DRAW_INTERVAL_SECONDS}
+    ports:
+      - "${GAME_ENGINE_SERVICE_PORT}:8000"
+    depends_on:
+      redis:
+        condition: service_healthy
+
   winner-service:
     build:
       context: ./winner-service
@@ -135,6 +156,8 @@ services:
       CARD_SERVICE_URL: ${CARD_SERVICE_URL}
       GAME_ENGINE_SERVICE_URL: ${GAME_ENGINE_SERVICE_URL}
       USER_SERVICE_URL: ${USER_SERVICE_URL}
+      LOBBY_SERVICE_URL: ${LOBBY_SERVICE_URL}
+      INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN}
       REWARD_AMOUNT: ${WINNER_REWARD_AMOUNT}
       HTTP_TIMEOUT_SECONDS: ${HTTP_TIMEOUT_SECONDS}
     ports:
@@ -166,6 +189,8 @@ services:
       CARD_SERVICE_URL: ${CARD_SERVICE_URL}
       GAME_ENGINE_SERVICE_URL: ${GAME_ENGINE_SERVICE_URL}
       USER_SERVICE_URL: ${USER_SERVICE_URL}
+      LOBBY_SERVICE_URL: ${LOBBY_SERVICE_URL}
+      INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN}
       REWARD_AMOUNT: ${WINNER_REWARD_AMOUNT}
       HTTP_TIMEOUT_SECONDS: ${HTTP_TIMEOUT_SECONDS}
     depends_on:

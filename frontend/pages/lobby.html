@@ -1,1 +1,61 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BINGO // Комната</title>
+    <link rel="stylesheet" href="../css/styles.css" />
+  </head>
+  <body class="register-page game-page">
+    <main class="game-shell">
+      <section class="game-board-layout lobby-layout simple-lobby-layout" aria-label="Комната BINGO">
+        <header class="game-header">
+          <div>
+            <div class="auth-kicker">BINGO NETWORK // ROOM</div>
+            <h1 class="game-title">Комната</h1>
+          </div>
+          <a class="game-link" href="./home.html">Главная</a>
+        </header>
 
+        <section class="game-panel game-control-panel simple-game-panel" aria-label="Действия комнаты">
+          <button class="auth-button game-button" id="createRoomButton" type="button">
+            <span>Создать комнату</span>
+          </button>
+
+          <form class="join-room-compact" id="joinRoomForm">
+            <input id="joinRoomIdInput" type="number" min="1" step="1" placeholder="Код комнаты" />
+            <button class="auth-button game-button game-button-secondary" type="submit">
+              <span>Войти</span>
+            </button>
+          </form>
+
+          <button class="auth-button game-button" id="startRoomButton" type="button" disabled>
+            <span>Начать игру</span>
+          </button>
+
+          <a class="auth-button home-button lobby-play-link" id="openGameLink" href="./game.html" aria-disabled="true">
+            <span>Перейти к игре</span>
+          </a>
+
+          <p class="auth-message game-message" id="lobbyMessage" aria-live="polite"></p>
+        </section>
+
+        <section class="game-panel bingo-card-panel lobby-room-panel simple-room-card" aria-label="Текущая комната">
+          <div class="room-code">
+            <span>Код комнаты</span>
+            <strong id="roomIdValue">...</strong>
+          </div>
+
+          <div class="room-status-line">
+            <span id="roomStatus">Комната не выбрана</span>
+            <small id="roomHostValue">Хост: ...</small>
+          </div>
+
+          <div class="lobby-player-list" id="playerList" aria-label="Игроки"></div>
+        </section>
+      </section>
+    </main>
+
+    <script src="../js/lobby.js"></script>
+  </body>
+</html>

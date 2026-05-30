@@ -99,6 +99,25 @@ def test_start_room_notifies_game_engine(client, monkeypatch):
     assert notified_room_ids == [room["id"]]
 
 
+def test_finish_room_notifies_game_engine(client, monkeypatch):
+    room = create_room(client)
+    client.post(f"/rooms/{room['id']}/start", headers=auth_headers("host"))
+    notified_room_ids = []
+
+    def fake_notify_game_finished(room_model):
+        notified_room_ids.append(room_model.id)
+
+    monkeypatch.setattr("app.api.notify_game_finished", fake_notify_game_finished)
+
+    response = client.post(
+        f"/rooms/{room['id']}/finish",
+        headers=auth_headers("host"),
+    )
+
+    assert response.status_code == 200
+    assert notified_room_ids == [room["id"]]
+
+
 def test_join_after_start_is_rejected(client):
     room = create_room(client)
     client.post(f"/rooms/{room['id']}/start", headers=auth_headers("host"))

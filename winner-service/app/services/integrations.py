@@ -44,3 +44,15 @@ async def reward_winner(
             json={"amount": str(amount)},
         )
         response.raise_for_status()
+
+
+async def finish_lobby_room(game_id: str) -> None:
+    if not settings.lobby_service_url or not settings.internal_service_token:
+        return
+
+    async with httpx.AsyncClient(timeout=settings.http_timeout_seconds) as client:
+        response = await client.post(
+            f"{settings.lobby_service_url}/internal/rooms/{game_id}/finish",
+            headers={"X-Internal-Service-Token": settings.internal_service_token},
+        )
+        response.raise_for_status()

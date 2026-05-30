@@ -62,6 +62,6 @@ class WinnerCheckData(BaseModel):
 
 class GameState(BaseModel):
     room_id: str
-    status: str | None = None
+    is_active: bool | None = None
     last_ball: str | int | None = None
-    drawn_balls: list[str | int] = Field(default_factory=list)
+    drawn_balls: list[str | int | dict] = Field(default_factory=list)
