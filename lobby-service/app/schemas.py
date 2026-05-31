@@ -27,12 +27,18 @@ class PlayerResponse(BaseModel):
 
 class RoomResponse(BaseModel):
     id: int
+    name: str
     host_user_id: str
     status: str
     winning_pattern: WinningPattern
     players: list[PlayerResponse]
     created_at: datetime
     updated_at: datetime
+
+
+class CreateRoomRequest(BaseModel):
+    name: str = "BINGO room"
+    winning_pattern: WinningPattern = "top_row"
 
 
 class StartRoomRequest(BaseModel):

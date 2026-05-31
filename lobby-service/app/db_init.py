@@ -31,6 +31,17 @@ def init_db() -> None:
                 text("ALTER TABLE rooms ALTER COLUMN winning_pattern SET NOT NULL")
             )
 
+        if "name" not in room_columns:
+            connection.execute(
+                text("ALTER TABLE rooms ADD COLUMN name VARCHAR(80)")
+            )
+            connection.execute(
+                text("UPDATE rooms SET name = 'Room ' || id WHERE name IS NULL")
+            )
+            connection.execute(
+                text("ALTER TABLE rooms ALTER COLUMN name SET NOT NULL")
+            )
+
 
 if __name__ == "__main__":
     init_db()

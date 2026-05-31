@@ -7,11 +7,30 @@
     <link rel="stylesheet" href="../css/styles.css" />
   </head>
   <body>
+    <aside class="app-sidebar" aria-label="BINGO navigation">
+      <div class="side-brand">
+        <span>BINGO</span>
+        <strong id="navUserName">Player</strong>
+      </div>
+      <nav class="side-nav">
+        <a class="side-nav-link" href="./home.html">Главная</a>
+        <a class="side-nav-link" href="./lobby.html">Комнаты</a>
+        <a class="side-nav-link" href="./profile.html">Профиль</a>
+      </nav>
+      <button class="side-nav-logout" id="navLogoutButton" type="button">Выйти</button>
+    </aside>
+
     <main class="auth-shell">
       <section class="auth-scene home-scene" aria-label="Профиль пользователя BINGO">
+        <div class="signal-panel" aria-hidden="true">
+          <span class="signal-line signal-line-a"></span>
+          <span class="signal-line signal-line-b"></span>
+          <span class="signal-line signal-line-c"></span>
+        </div>
+
         <article class="auth-card profile-card">
           <div class="auth-kicker">BINGO</div>
-          <h1 class="auth-title">Профиль</h1>
+          <h1 class="auth-title" data-text="Профиль">Профиль</h1>
           <p class="auth-subtitle" id="profileStatus">Загружаем данные профиля...</p>
 
           <dl class="profile-grid" aria-label="Данные профиля">
@@ -33,19 +52,12 @@
             </div>
           </dl>
 
-          <div class="home-actions home-actions-grid">
-            <a class="auth-button home-button" href="./home.html">
-              <span>На главную</span>
-            </a>
-            <button class="auth-button home-button home-button-secondary" id="logoutButton" type="button">
-              <span>Выйти</span>
-            </button>
-          </div>
         </article>
       </section>
     </main>
 
     <script src="../js/api.js?v=ui-1"></script>
+    <script src="../js/nav.js?v=ui-1"></script>
     <script src="../js/user.js?v=ui-1"></script>
   </body>
 </html>

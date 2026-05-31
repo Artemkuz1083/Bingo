@@ -1,7 +1,7 @@
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
-from app.models import Room, RoomPlayer, RoomStatus
+from app.models import DEFAULT_WINNING_PATTERN, Room, RoomPlayer, RoomStatus
 
 
 def get_room(db: Session, room_id: int) -> Room | None:
@@ -12,8 +12,27 @@ def get_room(db: Session, room_id: int) -> Room | None:
     )
 
 
-def create_room(db: Session, host_user_id: str, host_display_name: str | None = None) -> Room:
-    room = Room(host_user_id=host_user_id, status=RoomStatus.WAITING.value)
+def list_rooms(db: Session, status: str | None = None) -> list[Room]:
+    query = select(Room).options(selectinload(Room.players)).order_by(Room.created_at.desc())
+    if status:
+        query = query.where(Room.status == status)
+
+    return list(db.scalars(query))
+
+
+def create_room(
+    db: Session,
+    host_user_id: str,
+    host_display_name: str | None = None,
+    name: str | None = None,
+    winning_pattern: str = DEFAULT_WINNING_PATTERN,
+) -> Room:
+    room = Room(
+        name=(name or "BINGO room").strip()[:80] or "BINGO room",
+        host_user_id=host_user_id,
+        status=RoomStatus.WAITING.value,
+        winning_pattern=winning_pattern,
+    )
     db.add(room)
     db.flush()
 
@@ -55,6 +74,11 @@ def add_player(db: Session, room: Room, user_id: str, display_name: str | None =
         db.commit()
 
     return get_room(db, room.id)
+
+
+def delete_room(db: Session, room: Room) -> None:
+    db.delete(room)
+    db.commit()
 
 
 def set_room_status(db: Session, room: Room, status: RoomStatus) -> Room:

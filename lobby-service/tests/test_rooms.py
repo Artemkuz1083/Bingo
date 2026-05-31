@@ -16,14 +16,68 @@ def create_room(client, user_id="host"):
 
 
 def test_create_room_adds_host_as_player(client):
-    response = client.post("/rooms", headers=auth_headers("1", "host-name"))
+    response = client.post(
+        "/rooms",
+        headers=auth_headers("1", "host-name"),
+        json={"name": "Friday room", "winning_pattern": "four_corners"},
+    )
     assert response.status_code == 201
     room = response.json()
 
+    assert room["name"] == "Friday room"
     assert room["host_user_id"] == "1"
     assert room["status"] == "waiting"
-    assert room["winning_pattern"] == "top_row"
+    assert room["winning_pattern"] == "four_corners"
     assert [player["display_name"] for player in room["players"]] == ["host-name"]
+
+
+def test_list_waiting_rooms(client):
+    waiting_room = create_room(client, "host-a")
+    active_room = create_room(client, "host-b")
+    client.post(f"/rooms/{active_room['id']}/start", headers=auth_headers("host-b"))
+
+    response = client.get("/rooms?status_filter=waiting")
+
+    assert response.status_code == 200
+    room_ids = [room["id"] for room in response.json()]
+    assert waiting_room["id"] in room_ids
+    assert active_room["id"] not in room_ids
+
+
+def test_host_can_close_waiting_room(client):
+    room = create_room(client)
+
+    response = client.delete(
+        f"/rooms/{room['id']}",
+        headers=auth_headers("host"),
+    )
+    lookup = client.get(f"/rooms/{room['id']}")
+
+    assert response.status_code == 204
+    assert lookup.status_code == 404
+
+
+def test_only_host_can_close_room(client):
+    room = create_room(client)
+
+    response = client.delete(
+        f"/rooms/{room['id']}",
+        headers=auth_headers("player"),
+    )
+
+    assert response.status_code == 403
+
+
+def test_active_room_cannot_be_closed(client):
+    room = create_room(client)
+    client.post(f"/rooms/{room['id']}/start", headers=auth_headers("host"))
+
+    response = client.delete(
+        f"/rooms/{room['id']}",
+        headers=auth_headers("host"),
+    )
+
+    assert response.status_code == 409
 
 
 def test_join_room_is_idempotent(client):

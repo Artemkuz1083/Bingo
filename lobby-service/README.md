@@ -38,6 +38,9 @@ pytest
 
 ## Integration endpoints
 
+- `POST /rooms` accepts optional JSON `{ "name": string, "winning_pattern": string }` and returns the created room with the host already added as first player.
+- `GET /rooms?status_filter=waiting` returns rooms that can still be joined; the frontend uses this for the lobby room browser.
+- `DELETE /rooms/{room_id}` lets the host close a waiting room; players should return to the room browser after the room disappears.
 - On `POST /rooms/{room_id}/start`, `lobby-service` changes ownership state only after calling `POST {LOBBY_GAME_ENGINE_SERVICE_URL}/game/{room_id}/start` when `LOBBY_GAME_ENGINE_SERVICE_URL` is configured.
 - The game engine payload contains `room_id` and `player_user_ids`.
 - `POST /rooms/{room_id}/draw` is available only to the room host while the room is `active`; it calls `POST {LOBBY_GAME_ENGINE_SERVICE_URL}/game/{room_id}/draw`.

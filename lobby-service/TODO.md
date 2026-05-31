@@ -43,6 +43,9 @@
 
 ## Current integration contract
 
+- `POST /rooms` can receive room `name` and initial `winning_pattern`.
+- `GET /rooms?status_filter=waiting` lists joinable rooms for the frontend lobby.
+- `DELETE /rooms/{room_id}` closes a waiting room when requested by the host.
 - When a host starts a room, `lobby-service` can notify game engine with `POST {LOBBY_GAME_ENGINE_SERVICE_URL}/game/{room_id}/start`.
 - The notification payload is `room_id` and `player_user_ids`.
 - When a host draws a ball, `lobby-service` calls `POST {LOBBY_GAME_ENGINE_SERVICE_URL}/game/{room_id}/draw`.

@@ -1,14 +1,17 @@
 const LOBBY_API_URL = "";
 const LOGIN_PAGE_URL = "./login.html";
 const GAME_PAGE_URL = "./game.html";
+const LOBBY_PAGE_URL = "./lobby.html";
 
 const createRoomButton = document.querySelector("#createRoomButton");
-const joinRoomForm = document.querySelector("#joinRoomForm");
-const joinRoomIdInput = document.querySelector("#joinRoomIdInput");
+const roomSettingsForm = document.querySelector("#roomSettingsForm");
+const roomNameInput = document.querySelector("#roomNameInput");
+const cancelCreateRoomButton = document.querySelector("#cancelCreateRoomButton");
 const startRoomButton = document.querySelector("#startRoomButton");
 const lobbyMessage = document.querySelector("#lobbyMessage");
 const roomStatus = document.querySelector("#roomStatus");
 const roomIdValue = document.querySelector("#roomIdValue");
+const roomLinkValue = document.querySelector("#roomLinkValue");
 const roomHostValue = document.querySelector("#roomHostValue");
 const playerList = document.querySelector("#playerList");
 const openGameLink = document.querySelector("#openGameLink");
@@ -18,10 +21,19 @@ const openPatternModalButton = document.querySelector("#openPatternModalButton")
 const closePatternModalButton = document.querySelector("#closePatternModalButton");
 const selectedPatternPreview = document.querySelector("#selectedPatternPreview");
 const selectedPatternLabel = document.querySelector("#selectedPatternLabel");
+const roomBrowser = document.querySelector("#roomBrowser");
+const currentRoomView = document.querySelector("#currentRoomView");
+const availableRoomList = document.querySelector("#availableRoomList");
+const roomSearchInput = document.querySelector("#roomSearchInput");
+const refreshRoomsButton = document.querySelector("#refreshRoomsButton");
+const roomBrowserMessage = document.querySelector("#roomBrowserMessage");
+const closeRoomButton = document.querySelector("#closeRoomButton");
 
 let currentRoom = null;
+let availableRooms = [];
 let busy = false;
 let selectedWinningPattern = "top_row";
+let roomPollTimer = null;
 
 const WINNING_PATTERNS = [
   { id: "top_row", label: "Верхняя строка", cells: [[0, 0], [0, 1], [0, 2], [0, 3], [0, 4]] },
@@ -84,6 +96,14 @@ function setLobbyMessage(text, type = "is-success") {
   lobbyMessage.classList.add(type);
 }
 
+function setBrowserMessage(text, type = "") {
+  roomBrowserMessage.classList.remove("is-error", "is-success");
+  roomBrowserMessage.textContent = text;
+  if (type) {
+    roomBrowserMessage.classList.add(type);
+  }
+}
+
 function isNumericId(value) {
   return /^[1-9]\d*$/.test(String(value || "").trim());
 }
@@ -94,6 +114,10 @@ function statusLabel(status) {
     active: "Игра идет",
     finished: "Завершена",
   }[status] || status || "Неизвестно";
+}
+
+function patternLabel(patternId) {
+  return WINNING_PATTERNS.find((pattern) => pattern.id === patternId)?.label || patternId;
 }
 
 function getAuthHeaders() {
@@ -125,11 +149,32 @@ async function readResponse(response) {
   return data;
 }
 
-async function createRoom() {
+function stopRoomPolling() {
+  if (roomPollTimer) {
+    clearInterval(roomPollTimer);
+    roomPollTimer = null;
+  }
+}
+
+function startRoomPolling() {
+  stopRoomPolling();
+  roomPollTimer = setInterval(checkCurrentRoom, 4000);
+}
+
+async function createRoom(payload) {
   const response = await fetch(`${LOBBY_API_URL}/rooms`, {
     method: "POST",
-    headers: getAuthHeaders(),
+    headers: {
+      ...getAuthHeaders(),
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
   });
+  return readResponse(response);
+}
+
+async function listWaitingRooms() {
+  const response = await fetch(`${LOBBY_API_URL}/rooms?status_filter=waiting`);
   return readResponse(response);
 }
 
@@ -146,6 +191,19 @@ async function loadRoom(roomId) {
   return readResponse(response);
 }
 
+async function deleteRoom(roomId) {
+  const response = await fetch(`${LOBBY_API_URL}/rooms/${encodeURIComponent(roomId)}`, {
+    method: "DELETE",
+    headers: getAuthHeaders(),
+  });
+
+  if (response.status === 204) {
+    return;
+  }
+
+  await readResponse(response);
+}
+
 async function startRoom(roomId) {
   const response = await fetch(`${LOBBY_API_URL}/rooms/${encodeURIComponent(roomId)}/start`, {
     method: "POST",
@@ -158,42 +216,63 @@ async function startRoom(roomId) {
   return readResponse(response);
 }
 
-function roomUrl(roomId) {
+function gameUrl(roomId) {
   return `${GAME_PAGE_URL}?game_id=${encodeURIComponent(roomId)}`;
+}
+
+function lobbyRoomUrl(roomId) {
+  return `${window.location.origin}${window.location.pathname}?room_id=${encodeURIComponent(roomId)}`;
+}
+
+function showCreateSettings() {
+  roomSettingsForm.classList.remove("is-hidden");
+  createRoomButton.classList.add("is-hidden");
+  roomNameInput.focus();
+  renderSelectedPattern();
+  renderPatternOptions();
+}
+
+function hideCreateSettings() {
+  roomSettingsForm.classList.add("is-hidden");
+  createRoomButton.classList.remove("is-hidden");
 }
 
 function renderEmptyRoom() {
   currentRoom = null;
-  roomStatus.textContent = "Комната не выбрана";
-  roomIdValue.textContent = "...";
-  roomHostValue.textContent = "Хост: ...";
-  playerList.replaceChildren();
-
-  const empty = document.createElement("div");
-  empty.className = "empty-state";
-  empty.textContent = "Создайте комнату или войдите по коду.";
-  playerList.appendChild(empty);
-
+  stopRoomPolling();
+  localStorage.removeItem("bingo_game_id");
+  createRoomButton.classList.remove("is-hidden");
+  roomBrowser.classList.remove("is-hidden");
+  currentRoomView.classList.add("is-hidden");
   startRoomButton.disabled = true;
   openGameLink.href = GAME_PAGE_URL;
   openGameLink.setAttribute("aria-disabled", "true");
-  renderPatternOptions();
+  closeRoomButton.classList.add("is-hidden");
+  closeRoomButton.disabled = true;
   renderSelectedPattern();
+  renderPatternOptions();
 }
 
 function syncRoom(room) {
   currentRoom = room;
+  selectedWinningPattern = room.winning_pattern || selectedWinningPattern;
   localStorage.setItem("bingo_game_id", String(room.id));
   renderRoom(room);
 }
 
 function renderRoom(room) {
-  selectedWinningPattern = room.winning_pattern || selectedWinningPattern;
-  roomStatus.textContent = statusLabel(room.status);
+  roomBrowser.classList.add("is-hidden");
+  currentRoomView.classList.remove("is-hidden");
+  hideCreateSettings();
+  createRoomButton.classList.add("is-hidden");
+
+  roomStatus.textContent = `${room.name || "BINGO room"} · ${statusLabel(room.status)} · ${patternLabel(room.winning_pattern)}`;
   roomIdValue.textContent = room.id;
+  roomLinkValue.href = lobbyRoomUrl(room.id);
+  roomLinkValue.textContent = lobbyRoomUrl(room.id);
+
   const host = room.players.find((player) => player.user_id === room.host_user_id);
   roomHostValue.textContent = `Хост: ${host?.display_name || room.host_user_id}`;
-  joinRoomIdInput.value = room.id;
 
   playerList.replaceChildren();
   room.players.forEach((player) => {
@@ -211,20 +290,82 @@ function renderRoom(room) {
   });
 
   startRoomButton.disabled = busy || room.status !== "waiting" || !isHost();
-  openGameLink.href = roomUrl(room.id);
+  closeRoomButton.classList.toggle("is-hidden", !isHost() || room.status !== "waiting");
+  closeRoomButton.disabled = busy || !isHost() || room.status !== "waiting";
+  openGameLink.href = gameUrl(room.id);
   openGameLink.setAttribute("aria-disabled", "false");
   renderPatternOptions();
   renderSelectedPattern();
+  startRoomPolling();
+}
+
+function renderAvailableRooms() {
+  const search = roomSearchInput.value.trim();
+  const rooms = search
+    ? availableRooms.filter((room) => String(room.id).includes(search))
+    : availableRooms;
+
+  availableRoomList.replaceChildren();
+
+  if (!rooms.length) {
+    const empty = document.createElement("div");
+    empty.className = "empty-state";
+    empty.textContent = search ? "Комната с таким кодом не найдена." : "Пока нет комнат в ожидании.";
+    availableRoomList.appendChild(empty);
+    return;
+  }
+
+  rooms.forEach((room) => {
+    const item = document.createElement("article");
+    item.className = "available-room";
+
+    const info = document.createElement("div");
+    info.className = "available-room-info";
+
+    const title = document.createElement("strong");
+    title.textContent = room.name || `Комната ${room.id}`;
+
+    const meta = document.createElement("span");
+    meta.textContent = `Код ${room.id} · ${room.players.length} игрок(ов) · ${patternLabel(room.winning_pattern)}`;
+
+    info.append(title, meta);
+
+    const joinButton = document.createElement("button");
+    joinButton.className = "auth-button game-button available-room-join";
+    joinButton.type = "button";
+    joinButton.disabled = busy;
+    joinButton.textContent = "Войти";
+    joinButton.addEventListener("click", () => {
+      withLobbyAction(async () => {
+        setLobbyMessage("Входим в комнату...");
+        syncRoom(await joinRoom(room.id));
+        setLobbyMessage("Вы в комнате. Когда хост начнет игру, переходите к карточке.");
+      });
+    });
+
+    item.append(info, joinButton);
+    availableRoomList.appendChild(item);
+  });
+}
+
+async function refreshRooms() {
+  setBrowserMessage("Обновляем список комнат...");
+  availableRooms = await listWaitingRooms();
+  renderAvailableRooms();
+  setBrowserMessage("Выберите комнату или создайте новую.", "is-success");
 }
 
 function setBusy(isBusy) {
   busy = isBusy;
   createRoomButton.disabled = isBusy;
-  joinRoomForm.querySelectorAll("input, button").forEach((element) => {
+  roomSettingsForm.querySelectorAll("input, button").forEach((element) => {
     element.disabled = isBusy;
   });
+  refreshRoomsButton.disabled = isBusy;
   startRoomButton.disabled = isBusy || !currentRoom || currentRoom.status !== "waiting" || !isHost();
-  openPatternModalButton.disabled = isBusy || (currentRoom && (currentRoom.status !== "waiting" || !isHost()));
+  closeRoomButton.disabled = isBusy || !currentRoom || currentRoom.status !== "waiting" || !isHost();
+  openPatternModalButton.disabled = isBusy || currentRoom !== null;
+  renderAvailableRooms();
   renderPatternOptions();
   renderSelectedPattern();
 }
@@ -263,7 +404,7 @@ function renderPatternOptions() {
     const option = document.createElement("button");
     option.className = "pattern-option";
     option.type = "button";
-    option.disabled = busy || (currentRoom && (currentRoom.status !== "waiting" || !isHost()));
+    option.disabled = busy || currentRoom !== null;
     option.setAttribute("aria-pressed", String(pattern.id === selectedWinningPattern));
 
     const preview = document.createElement("span");
@@ -305,6 +446,7 @@ async function withLobbyAction(action) {
     await action();
   } catch (error) {
     setLobbyMessage(error.message, "is-error");
+    setBrowserMessage(error.message, "is-error");
     if (error.message.includes("войти") || error.message.includes("Сессия")) {
       setTimeout(() => {
         window.location.href = LOGIN_PAGE_URL;
@@ -315,23 +457,44 @@ async function withLobbyAction(action) {
   }
 }
 
-createRoomButton.addEventListener("click", () => withLobbyAction(async () => {
-  setLobbyMessage("Создаем комнату...");
-  syncRoom(await createRoom());
-  setLobbyMessage("Комната создана. Передайте код другим игрокам.");
-}));
-
-joinRoomForm.addEventListener("submit", (event) => withLobbyAction(async () => {
-  event.preventDefault();
-  const roomId = joinRoomIdInput.value.trim();
-  if (!isNumericId(roomId)) {
-    throw new Error("Введите числовой код комнаты.");
+async function checkCurrentRoom() {
+  if (!currentRoom || busy) {
+    return;
   }
 
-  setLobbyMessage("Входим в комнату...");
-  syncRoom(await joinRoom(roomId));
-  setLobbyMessage("Вы в комнате. Когда хост начнет игру, переходите к карточке.");
-}));
+  try {
+    syncRoom(await loadRoom(currentRoom.id));
+  } catch (error) {
+    if (String(error.message).includes("Room not found")) {
+      renderEmptyRoom();
+      await refreshRooms();
+      setLobbyMessage("Комната закрыта. Вы вернулись к списку комнат.", "is-success");
+      return;
+    }
+
+    setLobbyMessage(error.message, "is-error");
+  }
+}
+
+createRoomButton.addEventListener("click", showCreateSettings);
+cancelCreateRoomButton.addEventListener("click", hideCreateSettings);
+
+roomSettingsForm.addEventListener("submit", (event) => {
+  event.preventDefault();
+  withLobbyAction(async () => {
+    const name = roomNameInput.value.trim();
+    if (!name) {
+      throw new Error("Введите название комнаты.");
+    }
+
+    setLobbyMessage("Создаем комнату...");
+    syncRoom(await createRoom({ name, winning_pattern: selectedWinningPattern }));
+    setLobbyMessage("Комната создана. Передайте код или ссылку другим игрокам.");
+  });
+});
+
+refreshRoomsButton.addEventListener("click", () => withLobbyAction(refreshRooms));
+roomSearchInput.addEventListener("input", renderAvailableRooms);
 
 startRoomButton.addEventListener("click", () => withLobbyAction(async () => {
   if (!currentRoom) {
@@ -341,6 +504,18 @@ startRoomButton.addEventListener("click", () => withLobbyAction(async () => {
   setLobbyMessage("Запускаем игру...");
   syncRoom(await startRoom(currentRoom.id));
   setLobbyMessage("Игра запущена. Теперь можно открыть карточку.");
+}));
+
+closeRoomButton.addEventListener("click", () => withLobbyAction(async () => {
+  if (!currentRoom) {
+    throw new Error("Сначала выберите комнату.");
+  }
+
+  setLobbyMessage("Закрываем комнату...");
+  await deleteRoom(currentRoom.id);
+  renderEmptyRoom();
+  await refreshRooms();
+  setLobbyMessage("Комната закрыта.");
 }));
 
 openPatternModalButton.addEventListener("click", openPatternModal);
@@ -353,11 +528,18 @@ patternModal.addEventListener("click", (event) => {
 
 renderEmptyRoom();
 
-const savedGameId = localStorage.getItem("bingo_game_id");
-if (isNumericId(savedGameId)) {
-  joinRoomIdInput.value = savedGameId;
+const linkedRoomId = new URLSearchParams(window.location.search).get("room_id");
+if (isNumericId(linkedRoomId)) {
   withLobbyAction(async () => {
-    syncRoom(await loadRoom(savedGameId));
-    setLobbyMessage("Открыта последняя выбранная комната.");
+    const room = await loadRoom(linkedRoomId);
+    if (room.status === "waiting") {
+      syncRoom(await joinRoom(linkedRoomId));
+      setLobbyMessage("Вы вошли в комнату по ссылке.");
+    } else {
+      syncRoom(room);
+      setLobbyMessage("Открыта комната по ссылке.");
+    }
   });
+} else {
+  withLobbyAction(refreshRooms);
 }

@@ -10,8 +10,8 @@ from app.dependencies import (
 )
 from app.integrations import draw_game_ball, notify_game_finished, notify_game_started
 from app.models import Room, RoomStatus
-from app.schemas import PlayerResponse, PlayersResponse, RoomResponse, StartRoomRequest
-from app.services import add_player, create_room, get_room, set_room_status, start_room
+from app.schemas import CreateRoomRequest, PlayerResponse, PlayersResponse, RoomResponse, StartRoomRequest
+from app.services import add_player, create_room, delete_room, get_room, list_rooms, set_room_status, start_room
 
 router = APIRouter()
 
@@ -19,6 +19,7 @@ router = APIRouter()
 def serialize_room(room: Room) -> RoomResponse:
     return RoomResponse(
         id=room.id,
+        name=room.name,
         host_user_id=room.host_user_id,
         status=room.status,
         winning_pattern=room.winning_pattern,
@@ -48,16 +49,31 @@ def load_room_or_404(db: Session, room_id: int) -> Room:
 
 @router.post("/rooms", response_model=RoomResponse, status_code=status.HTTP_201_CREATED)
 def create_room_endpoint(
+    payload: CreateRoomRequest | None = None,
     current_user: CurrentUser = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> RoomResponse:
+    room_payload = payload or CreateRoomRequest()
     return serialize_room(
         create_room(
             db,
             current_user.user_id,
             current_user.display_name,
+            room_payload.name,
+            room_payload.winning_pattern,
         )
     )
+
+
+@router.get("/rooms", response_model=list[RoomResponse])
+def list_rooms_endpoint(
+    status_filter: str | None = None,
+    db: Session = Depends(get_db),
+) -> list[RoomResponse]:
+    return [
+        serialize_room(room)
+        for room in list_rooms(db, status_filter)
+    ]
 
 
 @router.post("/rooms/{room_id}/join", response_model=RoomResponse)
@@ -90,6 +106,29 @@ def get_room_endpoint(
     db: Session = Depends(get_db),
 ) -> RoomResponse:
     return serialize_room(load_room_or_404(db, room_id))
+
+
+@router.delete("/rooms/{room_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_room_endpoint(
+    room_id: int,
+    user_id: str = Depends(get_current_user_id),
+    db: Session = Depends(get_db),
+) -> None:
+    room = load_room_or_404(db, room_id)
+
+    if room.host_user_id != user_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only room host can close the room",
+        )
+
+    if room.status != RoomStatus.WAITING.value:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Only waiting room can be closed",
+        )
+
+    delete_room(db, room)
 
 
 @router.get("/rooms/{room_id}/players", response_model=PlayersResponse)

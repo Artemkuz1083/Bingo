@@ -3,20 +3,29 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>BINGO | Комната</title>
+    <title>BINGO | Комнаты</title>
     <link rel="stylesheet" href="../css/styles.css" />
   </head>
   <body>
+    <aside class="app-sidebar" aria-label="BINGO navigation">
+      <div class="side-brand">
+        <span>BINGO</span>
+        <strong id="navUserName">Player</strong>
+      </div>
+      <nav class="side-nav">
+        <a class="side-nav-link" href="./home.html">Главная</a>
+        <a class="side-nav-link" href="./lobby.html">Комнаты</a>
+        <a class="side-nav-link" href="./profile.html">Профиль</a>
+      </nav>
+      <button class="side-nav-logout" id="navLogoutButton" type="button">Выйти</button>
+    </aside>
+
     <main class="game-shell">
-      <section class="game-board-layout lobby-layout" aria-label="Комната BINGO">
+      <section class="game-board-layout lobby-layout" aria-label="Комнаты BINGO">
         <header class="game-header">
           <div>
             <div class="auth-kicker">BINGO</div>
-            <h1 class="game-title">Комната</h1>
-          </div>
-          <div class="lobby-header-actions">
-            <a class="game-link" href="./home.html">Главная</a>
-            <a class="game-link" href="./profile.html">Профиль</a>
+            <h1 class="game-title" data-text="Комнаты">Комнаты</h1>
           </div>
         </header>
 
@@ -25,25 +34,32 @@
             <span>Создать комнату</span>
           </button>
 
-          <form class="join-room-compact" id="joinRoomForm">
-            <input id="joinRoomIdInput" type="number" min="1" step="1" placeholder="Код комнаты" />
-            <button class="auth-button game-button game-button-secondary" type="submit">
-              <span>Войти по коду</span>
+          <form class="room-settings-form is-hidden" id="roomSettingsForm">
+            <label class="field">
+              <span>Название</span>
+              <input id="roomNameInput" type="text" maxlength="80" placeholder="Например: Вечерний BINGO" required />
+            </label>
+
+            <div class="pattern-picker" aria-label="Комбинация для победы">
+              <div class="combo-title">Комбинация</div>
+              <button class="pattern-summary" id="openPatternModalButton" type="button">
+                <span class="pattern-preview" id="selectedPatternPreview"></span>
+                <strong id="selectedPatternLabel">Верхняя строка</strong>
+                <span class="pattern-summary-arrow" aria-hidden="true"></span>
+              </button>
+            </div>
+
+            <button class="auth-button game-button" id="confirmCreateRoomButton" type="submit">
+              <span>Создать</span>
+            </button>
+            <button class="auth-button game-button game-button-secondary" id="cancelCreateRoomButton" type="button">
+              <span>Отмена</span>
             </button>
           </form>
 
           <button class="auth-button game-button" id="startRoomButton" type="button" disabled>
             <span>Начать игру</span>
           </button>
-
-          <div class="pattern-picker" aria-label="Комбинация для победы">
-            <div class="combo-title">Комбинация</div>
-            <button class="pattern-summary" id="openPatternModalButton" type="button">
-              <span class="pattern-preview" id="selectedPatternPreview"></span>
-              <strong id="selectedPatternLabel">Верхняя строка</strong>
-              <span class="pattern-summary-arrow" aria-hidden="true"></span>
-            </button>
-          </div>
 
           <a class="auth-button game-button lobby-play-link" id="openGameLink" href="./game.html" aria-disabled="true">
             <span>Перейти к игре</span>
@@ -53,18 +69,48 @@
         </section>
 
         <section class="game-panel bingo-card-panel lobby-room-panel simple-room-card" aria-label="Текущая комната">
-          <div class="room-code">
-            <span>Код комнаты</span>
-            <strong id="roomIdValue">...</strong>
+          <div class="room-browser" id="roomBrowser">
+            <div class="room-browser-head">
+              <div>
+                <div class="combo-title">Доступные комнаты</div>
+                <p class="auth-message room-browser-message" id="roomBrowserMessage">Ищем комнаты в ожидании...</p>
+              </div>
+              <button class="auth-button game-button game-button-secondary room-refresh-button" id="refreshRoomsButton" type="button">
+                <span>Обновить</span>
+              </button>
+            </div>
+
+            <label class="field room-search-field">
+              <span>Поиск по коду</span>
+              <input id="roomSearchInput" type="search" inputmode="numeric" placeholder="Введите код комнаты" />
+            </label>
+
+            <div class="available-room-list" id="availableRoomList" aria-label="Созданные комнаты"></div>
           </div>
 
-          <div class="room-status-line">
-            <span id="roomStatus">Комната не выбрана</span>
-            <small id="roomHostValue">Хост: ...</small>
-          </div>
+          <div class="current-room-view is-hidden" id="currentRoomView">
+            <div class="room-code">
+              <span>Код комнаты</span>
+              <strong id="roomIdValue">...</strong>
+            </div>
 
-          <div class="lobby-player-list" id="playerList" aria-label="Игроки">
-            <div class="empty-state">Создайте комнату или войдите по коду.</div>
+            <div class="room-link-box">
+              <span>Ссылка на комнату</span>
+              <a id="roomLinkValue" href="./game.html">...</a>
+            </div>
+
+            <div class="room-status-line">
+              <span id="roomStatus">Комната не выбрана</span>
+              <small id="roomHostValue">Хост: ...</small>
+            </div>
+
+            <div class="lobby-player-list" id="playerList" aria-label="Игроки">
+              <div class="empty-state">Ожидаем игроков.</div>
+            </div>
+
+            <button class="auth-button game-button close-room-button is-hidden" id="closeRoomButton" type="button">
+              <span>Закрыть комнату</span>
+            </button>
           </div>
         </section>
       </section>
@@ -81,6 +127,7 @@
     </div>
 
     <script src="../js/api.js?v=ui-4"></script>
+    <script src="../js/nav.js?v=ui-1"></script>
     <script src="../js/lobby.js?v=ui-4"></script>
   </body>
 </html>

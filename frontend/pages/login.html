@@ -9,9 +9,15 @@
   <body>
     <main class="auth-shell">
       <section class="auth-scene auth-scene-login" aria-label="Вход в BINGO">
+        <div class="signal-panel" aria-hidden="true">
+          <span class="signal-line signal-line-a"></span>
+          <span class="signal-line signal-line-b"></span>
+          <span class="signal-line signal-line-c"></span>
+        </div>
+
         <form class="auth-card" id="loginForm">
           <div class="auth-kicker">BINGO</div>
-          <h1 class="auth-title">Войти</h1>
+          <h1 class="auth-title" data-text="Войти">Войти</h1>
           <p class="auth-subtitle">
             Войдите в аккаунт, чтобы открыть лобби и продолжить игру.
           </p>

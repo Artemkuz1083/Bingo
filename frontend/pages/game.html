@@ -7,14 +7,26 @@
     <link rel="stylesheet" href="../css/styles.css" />
   </head>
   <body>
+    <aside class="app-sidebar" aria-label="BINGO navigation">
+      <div class="side-brand">
+        <span>BINGO</span>
+        <strong id="navUserName">Player</strong>
+      </div>
+      <nav class="side-nav">
+        <a class="side-nav-link" href="./home.html">Главная</a>
+        <a class="side-nav-link" href="./lobby.html">Комнаты</a>
+        <a class="side-nav-link" href="./profile.html">Профиль</a>
+      </nav>
+      <button class="side-nav-logout" id="navLogoutButton" type="button">Выйти</button>
+    </aside>
+
     <main class="game-shell">
       <section class="game-board-layout simple-game-layout" aria-label="Игра BINGO">
         <header class="game-header">
           <div>
             <div class="auth-kicker">BINGO</div>
-            <h1 class="game-title">Игра</h1>
+            <h1 class="game-title" data-text="Игра">Игра</h1>
           </div>
-          <a class="game-link" href="./lobby.html">Комната</a>
         </header>
 
         <section class="game-panel bingo-card-panel" aria-label="Карточка BINGO">
@@ -69,6 +81,7 @@
     </main>
 
     <script src="../js/api.js?v=ui-3"></script>
+    <script src="../js/nav.js?v=ui-1"></script>
     <script src="../js/game.js?v=ui-3"></script>
   </body>
 </html>
