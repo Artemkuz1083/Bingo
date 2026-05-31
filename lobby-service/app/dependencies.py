@@ -1,3 +1,5 @@
+from dataclasses import dataclass
+
 from fastapi import Depends, Header, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError, jwt
@@ -8,10 +10,17 @@ from app.config import settings
 bearer_scheme = HTTPBearer(auto_error=False)
 
 
-def get_current_user_id(
+@dataclass(frozen=True)
+class CurrentUser:
+    user_id: str
+    display_name: str
+
+
+def get_current_user(
     credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
     x_user_id: str | None = Header(default=None),
-) -> str:
+    x_user_name: str | None = Header(default=None),
+) -> CurrentUser:
     if credentials is not None:
         try:
             payload = jwt.decode(
@@ -32,7 +41,13 @@ def get_current_user_id(
                 detail="Token does not contain user id",
             )
 
-        return str(user_id)
+        display_name = str(
+            x_user_name
+            or payload.get("username")
+            or payload.get("preferred_username")
+            or user_id
+        ).strip()
+        return CurrentUser(user_id=str(user_id), display_name=display_name)
 
     # Temporary compatibility for manual testing until frontend switches to JWT.
     if x_user_id is None or not x_user_id.strip():
@@ -41,7 +56,12 @@ def get_current_user_id(
             detail="Authorization bearer token is required",
         )
 
-    return x_user_id.strip()
+    user_id = x_user_id.strip()
+    return CurrentUser(user_id=user_id, display_name=(x_user_name or user_id).strip())
+
+
+def get_current_user_id(current_user: CurrentUser = Depends(get_current_user)) -> str:
+    return current_user.user_id
 
 
 def verify_internal_service_token(

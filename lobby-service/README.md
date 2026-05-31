@@ -8,7 +8,7 @@
 
 Нужно реализовать микросервис, который будет создавать игровые комнаты, добавлять игроков в комнату, хранить список участников и управлять статусом игры: `waiting`, `active`, `finished`.
 
-Сервис получает `user_id` из JWT, который выдает `auth-service`. Идентификатор пользователя хранится в claim `sub`.
+Сервис получает `user_id` из JWT, который выдает `auth-service`. Идентификатор пользователя хранится в claim `sub`, а отображаемое имя игрока берется из claim `username` или заголовка `X-User-Name`.
 
 Для ручного тестирования временно поддерживается заголовок `X-User-Id`, но основной вариант для frontend и других сервисов - `Authorization: Bearer <token>`.
 
@@ -18,6 +18,7 @@
 - присоединение игрока к комнате;
 - получение списка игроков;
 - запуск игры только хостом;
+- ручная выдача следующего шара только хостом;
 - изменение статуса комнаты;
 - хранение данных о комнатах и игроках в PostgreSQL.
 
@@ -39,5 +40,6 @@ pytest
 
 - On `POST /rooms/{room_id}/start`, `lobby-service` changes ownership state only after calling `POST {LOBBY_GAME_ENGINE_SERVICE_URL}/game/{room_id}/start` when `LOBBY_GAME_ENGINE_SERVICE_URL` is configured.
 - The game engine payload contains `room_id` and `player_user_ids`.
+- `POST /rooms/{room_id}/draw` is available only to the room host while the room is `active`; it calls `POST {LOBBY_GAME_ENGINE_SERVICE_URL}/game/{room_id}/draw`.
 - `POST /internal/rooms/{room_id}/finish` lets another trusted service, for example `winner-service`, finish an active room.
 - Internal requests must include `X-Internal-Service-Token` matching `INTERNAL_SERVICE_TOKEN`.

@@ -3,23 +3,17 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>BINGO // Регистрация</title>
+    <title>BINGO | Регистрация</title>
     <link rel="stylesheet" href="../css/styles.css" />
   </head>
-  <body class="register-page">
+  <body>
     <main class="auth-shell">
       <section class="auth-scene" aria-label="Регистрация в BINGO">
-        <div class="signal-panel" aria-hidden="true">
-          <span class="signal-line signal-line-a"></span>
-          <span class="signal-line signal-line-b"></span>
-          <span class="signal-line signal-line-c"></span>
-        </div>
-
         <form class="auth-card" id="registerForm">
-          <div class="auth-kicker">BINGO NETWORK // ACCESS NODE</div>
-          <h1 class="auth-title" data-text="Создать аккаунт">Создать аккаунт</h1>
+          <div class="auth-kicker">BINGO</div>
+          <h1 class="auth-title">Создать аккаунт</h1>
           <p class="auth-subtitle">
-            Войди в систему, собери карточку и подключись к комнате.
+            Зарегистрируйтесь, чтобы создавать комнаты и играть по карточке.
           </p>
 
           <label class="field">
@@ -28,7 +22,7 @@
               type="text"
               name="username"
               autocomplete="username"
-              placeholder="neon_player"
+              placeholder="player"
               required
             />
           </label>
@@ -39,7 +33,7 @@
               type="email"
               name="email"
               autocomplete="email"
-              placeholder="player@bingo.zone"
+              placeholder="player@example.com"
               required
             />
           </label>
@@ -50,7 +44,7 @@
               type="password"
               name="password"
               autocomplete="new-password"
-              placeholder="••••••••"
+              placeholder="Минимум 6 символов"
               minlength="6"
               required
             />
@@ -70,7 +64,7 @@
       </section>
     </main>
 
-    <script src="../js/api.js?v=ngrok-1"></script>
-    <script src="../js/auth.js?v=ngrok-1"></script>
+    <script src="../js/api.js?v=ui-1"></script>
+    <script src="../js/auth.js?v=ui-1"></script>
   </body>
 </html>

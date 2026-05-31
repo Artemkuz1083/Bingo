@@ -3,23 +3,17 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>BINGO // Вход</title>
+    <title>BINGO | Вход</title>
     <link rel="stylesheet" href="../css/styles.css" />
   </head>
-  <body class="register-page">
+  <body>
     <main class="auth-shell">
       <section class="auth-scene auth-scene-login" aria-label="Вход в BINGO">
-        <div class="signal-panel" aria-hidden="true">
-          <span class="signal-line signal-line-a"></span>
-          <span class="signal-line signal-line-b"></span>
-          <span class="signal-line signal-line-c"></span>
-        </div>
-
         <form class="auth-card" id="loginForm">
-          <div class="auth-kicker">BINGO NETWORK // RETURN ACCESS</div>
-          <h1 class="auth-title" data-text="Войти">Войти</h1>
+          <div class="auth-kicker">BINGO</div>
+          <h1 class="auth-title">Войти</h1>
           <p class="auth-subtitle">
-            Вернись в сеть, забери токен доступа и продолжи игру.
+            Войдите в аккаунт, чтобы открыть лобби и продолжить игру.
           </p>
 
           <label class="field">
@@ -28,7 +22,7 @@
               type="email"
               name="email"
               autocomplete="email"
-              placeholder="player@bingo.zone"
+              placeholder="player@example.com"
               required
             />
           </label>
@@ -39,14 +33,14 @@
               type="password"
               name="password"
               autocomplete="current-password"
-              placeholder="••••••••"
+              placeholder="Ваш пароль"
               minlength="6"
               required
             />
           </label>
 
           <button class="auth-button" type="submit">
-            <span>Получить доступ</span>
+            <span>Войти</span>
           </button>
 
           <p class="auth-message" id="loginMessage" aria-live="polite"></p>
@@ -59,7 +53,7 @@
       </section>
     </main>
 
-    <script src="../js/api.js?v=ngrok-1"></script>
-    <script src="../js/auth.js?v=ngrok-1"></script>
+    <script src="../js/api.js?v=ui-1"></script>
+    <script src="../js/auth.js?v=ui-1"></script>
   </body>
 </html>

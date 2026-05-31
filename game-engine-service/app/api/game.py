@@ -24,6 +24,14 @@ async def stop_game(room_id: str):
 async def get_state(room_id: str):
     return await engine.get_state(room_id)
 
+
+@router.post("/{room_id}/draw")
+async def draw_ball(room_id: str):
+    ball = await engine.draw_ball(room_id)
+    if ball is None:
+        raise HTTPException(status_code=409, detail="Game is not active or no balls remain")
+    return ball
+
 @router.get("/{room_id}/last", response_model=BallResponse | None)
 async def get_last_ball(room_id: str):
     state = await engine.get_state(room_id)

@@ -39,7 +39,7 @@ async def register_user(
 
     return AuthResponse(
         user=user,
-        token=TokenResponse(access_token=create_access_token(user.id)),
+        token=TokenResponse(access_token=create_access_token(user.id, user.username)),
     )
 
 
@@ -57,7 +57,7 @@ async def login_user(
 
     return AuthResponse(
         user=user,
-        token=TokenResponse(access_token=create_access_token(user.id)),
+        token=TokenResponse(access_token=create_access_token(user.id, user.username)),
     )
 
 

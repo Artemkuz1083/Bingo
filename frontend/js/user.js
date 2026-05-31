@@ -68,7 +68,7 @@ async function loadProfile() {
 
     renderProfile(data);
     localStorage.setItem("bingo_user", JSON.stringify(data));
-    setProfileStatus("Сигнал профиля принят. Канал стабилен.");
+    setProfileStatus("Профиль загружен.");
   } catch (error) {
     setProfileStatus(error.message, "is-error");
   }

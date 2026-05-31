@@ -3,18 +3,21 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>BINGO // Комната</title>
+    <title>BINGO | Комната</title>
     <link rel="stylesheet" href="../css/styles.css" />
   </head>
-  <body class="register-page game-page">
+  <body>
     <main class="game-shell">
-      <section class="game-board-layout lobby-layout simple-lobby-layout" aria-label="Комната BINGO">
+      <section class="game-board-layout lobby-layout" aria-label="Комната BINGO">
         <header class="game-header">
           <div>
-            <div class="auth-kicker">BINGO NETWORK // ROOM</div>
+            <div class="auth-kicker">BINGO</div>
             <h1 class="game-title">Комната</h1>
           </div>
-          <a class="game-link" href="./home.html">Главная</a>
+          <div class="lobby-header-actions">
+            <a class="game-link" href="./home.html">Главная</a>
+            <a class="game-link" href="./profile.html">Профиль</a>
+          </div>
         </header>
 
         <section class="game-panel game-control-panel simple-game-panel" aria-label="Действия комнаты">
@@ -25,7 +28,7 @@
           <form class="join-room-compact" id="joinRoomForm">
             <input id="joinRoomIdInput" type="number" min="1" step="1" placeholder="Код комнаты" />
             <button class="auth-button game-button game-button-secondary" type="submit">
-              <span>Войти</span>
+              <span>Войти по коду</span>
             </button>
           </form>
 
@@ -33,7 +36,16 @@
             <span>Начать игру</span>
           </button>
 
-          <a class="auth-button home-button lobby-play-link" id="openGameLink" href="./game.html" aria-disabled="true">
+          <div class="pattern-picker" aria-label="Комбинация для победы">
+            <div class="combo-title">Комбинация</div>
+            <button class="pattern-summary" id="openPatternModalButton" type="button">
+              <span class="pattern-preview" id="selectedPatternPreview"></span>
+              <strong id="selectedPatternLabel">Верхняя строка</strong>
+              <span class="pattern-summary-arrow" aria-hidden="true"></span>
+            </button>
+          </div>
+
+          <a class="auth-button game-button lobby-play-link" id="openGameLink" href="./game.html" aria-disabled="true">
             <span>Перейти к игре</span>
           </a>
 
@@ -51,12 +63,24 @@
             <small id="roomHostValue">Хост: ...</small>
           </div>
 
-          <div class="lobby-player-list" id="playerList" aria-label="Игроки"></div>
+          <div class="lobby-player-list" id="playerList" aria-label="Игроки">
+            <div class="empty-state">Создайте комнату или войдите по коду.</div>
+          </div>
         </section>
       </section>
     </main>
 
-    <script src="../js/api.js?v=ngrok-1"></script>
-    <script src="../js/lobby.js?v=ngrok-1"></script>
+    <div class="modal-backdrop is-hidden" id="patternModal" role="dialog" aria-modal="true" aria-labelledby="patternModalTitle">
+      <section class="modal-panel">
+        <div class="modal-header">
+          <h2 id="patternModalTitle">Комбинация</h2>
+          <button class="modal-close" id="closePatternModalButton" type="button" aria-label="Закрыть">×</button>
+        </div>
+        <div class="pattern-options" id="patternOptions"></div>
+      </section>
+    </div>
+
+    <script src="../js/api.js?v=ui-4"></script>
+    <script src="../js/lobby.js?v=ui-4"></script>
   </body>
 </html>

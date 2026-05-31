@@ -1,11 +1,13 @@
 const CARD_API_URL = "";
 const GAME_ENGINE_API_URL = "";
+const LOBBY_API_URL = "";
 const WINNER_API_URL = "";
+const LOBBY_PAGE_URL = "./lobby.html";
+const LOGIN_PAGE_URL = "./login.html";
 
 const gameIdValue = document.querySelector("#gameIdValue");
 const cardActionButton = document.querySelector("#cardActionButton");
-const refreshStateButton = document.querySelector("#refreshStateButton");
-const markLastBallButton = document.querySelector("#markLastBallButton");
+const drawBallButton = document.querySelector("#drawBallButton");
 const claimBingoButton = document.querySelector("#claimBingoButton");
 const gameStatusValue = document.querySelector("#gameStatusValue");
 const lastBallValue = document.querySelector("#lastBallValue");
@@ -14,12 +16,35 @@ const gameMessage = document.querySelector("#gameMessage");
 const bingoCard = document.querySelector("#bingoCard");
 const cardOwner = document.querySelector("#cardOwner");
 const markedCounter = document.querySelector("#markedCounter");
+const winnerLine = document.querySelector("#winnerLine");
+const winnerValue = document.querySelector("#winnerValue");
+const comboList = document.querySelector("#comboList");
 
 let currentCard = null;
+let currentRoom = null;
 let currentGameId = resolveGameId();
 let lastBallNumber = null;
+let currentDrawnNumbers = new Set();
 let busy = false;
 let autoRefreshTimer = null;
+let claimPollTimer = null;
+let claimPending = false;
+let currentWinner = null;
+
+const WINNING_PATTERNS = {
+  top_row: { label: "Верхняя строка", cells: [[0, 0], [0, 1], [0, 2], [0, 3], [0, 4]] },
+  middle_row: { label: "Средняя строка", cells: [[2, 0], [2, 1], [2, 2], [2, 3], [2, 4]] },
+  bottom_row: { label: "Нижняя строка", cells: [[4, 0], [4, 1], [4, 2], [4, 3], [4, 4]] },
+  left_column: { label: "Левый столбец", cells: [[0, 0], [1, 0], [2, 0], [3, 0], [4, 0]] },
+  middle_column: { label: "Средний столбец", cells: [[0, 2], [1, 2], [2, 2], [3, 2], [4, 2]] },
+  right_column: { label: "Правый столбец", cells: [[0, 4], [1, 4], [2, 4], [3, 4], [4, 4]] },
+  main_diagonal: { label: "Диагональ", cells: [[0, 0], [1, 1], [2, 2], [3, 3], [4, 4]] },
+  anti_diagonal: { label: "Обратная диагональ", cells: [[0, 4], [1, 3], [2, 2], [3, 1], [4, 0]] },
+  four_corners: { label: "Углы", cells: [[0, 0], [0, 4], [4, 0], [4, 4]] },
+  x_shape: { label: "Крест X", cells: [[0, 0], [1, 1], [2, 2], [3, 3], [4, 4], [0, 4], [1, 3], [3, 1], [4, 0]] },
+  plus_shape: { label: "Плюс", cells: [[0, 2], [1, 2], [2, 0], [2, 1], [2, 2], [2, 3], [2, 4], [3, 2], [4, 2]] },
+  small_frame: { label: "Малая рамка", cells: [[1, 1], [1, 2], [1, 3], [2, 1], [2, 3], [3, 1], [3, 2], [3, 3]] },
+};
 
 function getToken() {
   return localStorage.getItem("bingo_access_token");
@@ -30,6 +55,37 @@ function clearAuthSession() {
   localStorage.removeItem("bingo_user");
 }
 
+function readCachedUser() {
+  try {
+    return JSON.parse(localStorage.getItem("bingo_user") || "null");
+  } catch {
+    return null;
+  }
+}
+
+function decodeTokenPayload() {
+  const token = getToken();
+  if (!token) {
+    return null;
+  }
+
+  try {
+    const payload = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
+    return JSON.parse(atob(payload));
+  } catch {
+    return null;
+  }
+}
+
+function getCurrentUserId() {
+  const payload = decodeTokenPayload();
+  return payload?.sub ? String(payload.sub) : "";
+}
+
+function getCurrentDisplayName() {
+  return readCachedUser()?.username || decodeTokenPayload()?.username || getCurrentUserId();
+}
+
 function setGameMessage(text, type = "is-success") {
   gameMessage.classList.remove("is-error", "is-success");
   gameMessage.textContent = text;
@@ -37,7 +93,7 @@ function setGameMessage(text, type = "is-success") {
 }
 
 function isNumericId(value) {
-  return /^[1-9]\d*$/.test(String(value).trim());
+  return /^[1-9]\d*$/.test(String(value || "").trim());
 }
 
 function resolveGameId() {
@@ -64,22 +120,33 @@ function getAuthHeaders() {
   if (!token) {
     throw new Error("Нужно войти в аккаунт.");
   }
-  return { Authorization: `Bearer ${token}` };
+  const headers = { Authorization: `Bearer ${token}` };
+  const username = readCachedUser()?.username;
+  if (username) {
+    headers["X-User-Name"] = username;
+  }
+  return headers;
 }
 
-async function readResponse(response) {
+async function readResponse(response, fallbackMessage) {
   const data = await response.json().catch(() => ({}));
 
   if (response.status === 401) {
     clearAuthSession();
-    throw new Error("Сессия истекла. Войди заново.");
+    throw new Error("Сессия истекла. Войдите заново.");
   }
 
   if (!response.ok) {
-    throw new Error(data.detail || "Сервис вернул ошибку.");
+    throw new Error(data.detail || fallbackMessage);
   }
 
   return data;
+}
+
+async function loadRoom() {
+  const gameId = getGameId();
+  const response = await fetch(`${LOBBY_API_URL}/rooms/${encodeURIComponent(gameId)}`);
+  return readResponse(response, "Не удалось загрузить комнату.");
 }
 
 async function createCard() {
@@ -88,7 +155,7 @@ async function createCard() {
     method: "POST",
     headers: getAuthHeaders(),
   });
-  return readResponse(response);
+  return readResponse(response, "Не удалось создать карточку.");
 }
 
 async function loadCard() {
@@ -96,7 +163,7 @@ async function loadCard() {
   const response = await fetch(`${CARD_API_URL}/games/${encodeURIComponent(gameId)}/cards/me`, {
     headers: getAuthHeaders(),
   });
-  return readResponse(response);
+  return readResponse(response, "Карточка не найдена.");
 }
 
 async function markNumber(number) {
@@ -109,13 +176,22 @@ async function markNumber(number) {
     },
     body: JSON.stringify({ number }),
   });
-  return readResponse(response);
+  return readResponse(response, "Не удалось отметить шар.");
 }
 
 async function loadGameState() {
   const gameId = getGameId();
   const response = await fetch(`${GAME_ENGINE_API_URL}/game/${encodeURIComponent(gameId)}/state`);
-  return readResponse(response);
+  return readResponse(response, "Игра еще не запущена.");
+}
+
+async function drawBall() {
+  const gameId = getGameId();
+  const response = await fetch(`${LOBBY_API_URL}/rooms/${encodeURIComponent(gameId)}/draw`, {
+    method: "POST",
+    headers: getAuthHeaders(),
+  });
+  return readResponse(response, "Не удалось достать шар.");
 }
 
 async function submitWinnerClaim() {
@@ -124,19 +200,204 @@ async function submitWinnerClaim() {
     method: "POST",
     headers: getAuthHeaders(),
   });
-  return readResponse(response);
+  return readResponse(response, "Не удалось отправить заявку BINGO.");
+}
+
+async function loadWinnerClaim(claimId) {
+  const gameId = getGameId();
+  const response = await fetch(
+    `${WINNER_API_URL}/games/${encodeURIComponent(gameId)}/winner-claims/${encodeURIComponent(claimId)}`,
+    {
+      headers: getAuthHeaders(),
+    },
+  );
+  return readResponse(response, "Не удалось проверить заявку BINGO.");
+}
+
+async function loadWinner() {
+  const gameId = getGameId();
+  const response = await fetch(`${WINNER_API_URL}/games/${encodeURIComponent(gameId)}/winner`);
+
+  if (response.status === 404) {
+    return null;
+  }
+
+  return readResponse(response, "Не удалось загрузить победителя.");
+}
+
+function claimStatusMessage(claim) {
+  return {
+    queued: "Заявка отправлена. Ждем проверку...",
+    processing: "Проверяем карточку...",
+    won: "BINGO подтверждено. Вы победили.",
+    rejected: "BINGO пока нет: нет закрытой линии.",
+    verification_failed: "Не удалось проверить BINGO. Попробуйте еще раз.",
+    reward_failed: "BINGO подтверждено, но награда не начислилась автоматически.",
+  }[claim.status] || "Проверяем заявку BINGO...";
+}
+
+function isFinalClaimStatus(status) {
+  return ["won", "rejected", "verification_failed", "reward_failed"].includes(status);
+}
+
+function claimMessageType(status) {
+  return status === "won" || status === "reward_failed" ? "is-success" : "is-error";
+}
+
+function playerName(userId) {
+  const player = currentRoom?.players?.find((roomPlayer) => roomPlayer.user_id === String(userId));
+  return player?.display_name || `Игрок ${userId}`;
+}
+
+function isRoomFinished() {
+  return currentRoom?.status === "finished";
+}
+
+function renderWinner(winner) {
+  currentWinner = winner;
+
+  if (!winner) {
+    winnerLine.classList.add("is-hidden");
+    winnerValue.textContent = "...";
+    return;
+  }
+
+  winnerLine.classList.remove("is-hidden");
+  winnerValue.textContent = playerName(winner.user_id);
+}
+
+function renderRoomState(room) {
+  currentRoom = room;
+  renderHostControls();
+  if (currentCard) {
+    renderCombinations(currentCard);
+    updateCardAvailability();
+  }
+
+  if (isRoomFinished()) {
+    gameStatusValue.textContent = "Завершена";
+    gameStatusValue.classList.remove("is-active");
+    gameStatusValue.classList.add("is-finished");
+    drawBallButton.disabled = true;
+    claimBingoButton.disabled = true;
+    return;
+  }
+
+  gameStatusValue.classList.remove("is-finished");
+}
+
+function stopClaimPolling() {
+  if (claimPollTimer) {
+    window.clearInterval(claimPollTimer);
+    claimPollTimer = null;
+  }
+  claimPending = false;
+}
+
+function startClaimPolling(claimId) {
+  stopClaimPolling();
+
+  let attempts = 0;
+  claimPending = true;
+  claimBingoButton.disabled = true;
+  setGameMessage("Заявка отправлена. Ждем проверку...");
+
+  claimPollTimer = window.setInterval(async () => {
+    attempts += 1;
+
+    try {
+      const claim = await loadWinnerClaim(claimId);
+      const message = claimStatusMessage(claim);
+
+      if (isFinalClaimStatus(claim.status)) {
+        stopClaimPolling();
+        claimBingoButton.disabled = false;
+        setGameMessage(message, claimMessageType(claim.status));
+        await refreshRoomState().catch(() => {});
+        await refreshGameState().catch(() => {});
+        return;
+      }
+
+      setGameMessage(message);
+    } catch (error) {
+      stopClaimPolling();
+      claimBingoButton.disabled = false;
+      setGameMessage(error.message, "is-error");
+      return;
+    }
+
+    if (attempts >= 20) {
+      stopClaimPolling();
+      claimBingoButton.disabled = false;
+      setGameMessage("Заявка все еще проверяется. Попробуйте обновить страницу через несколько секунд.");
+    }
+  }, 1000);
+}
+
+function isHost() {
+  return currentRoom?.host_user_id && currentRoom.host_user_id === getCurrentUserId();
+}
+
+function renderHostControls() {
+  drawBallButton.classList.toggle("is-hidden", !isHost());
+}
+
+function lineProgress(cells) {
+  return cells.filter((cell) => cell.is_free || cell.marked).length;
+}
+
+function patternCellKey(row, col) {
+  return `${row}:${col}`;
+}
+
+function selectedPattern() {
+  return WINNING_PATTERNS[currentRoom?.winning_pattern] || WINNING_PATTERNS.top_row;
+}
+
+function selectedPatternCells() {
+  return new Set(selectedPattern().cells.map(([row, col]) => patternCellKey(row, col)));
+}
+
+function renderCombinations(card) {
+  comboList.replaceChildren();
+
+  if (!card) {
+    const empty = document.createElement("span");
+    empty.textContent = "Откройте карточку";
+    comboList.appendChild(empty);
+    return;
+  }
+
+  const pattern = selectedPattern();
+  const cells = pattern.cells.map(([row, col]) => card.cells[row][col]);
+  const progress = lineProgress(cells);
+  const item = document.createElement("span");
+  item.className = "combo-item";
+  item.textContent = `${pattern.label}: ${progress}/${cells.length}`;
+  if (progress === cells.length) {
+    item.classList.add("is-complete");
+  }
+  comboList.appendChild(item);
+}
+
+function updateCardAvailability() {
+  bingoCard.querySelectorAll(".bingo-cell").forEach((button) => {
+    button.disabled = button.classList.contains("is-free") || isRoomFinished();
+  });
 }
 
 function renderCard(card) {
   currentCard = card;
   bingoCard.querySelectorAll(".bingo-cell").forEach((cell) => cell.remove());
+  const patternCells = selectedPatternCells();
 
   card.cells.flat().forEach((cell) => {
     const button = document.createElement("button");
     button.className = "bingo-cell";
     button.type = "button";
+    button.disabled = cell.is_free || isRoomFinished();
     button.dataset.number = cell.number || "";
-    button.setAttribute("aria-label", cell.is_free ? "FREE" : `${cell.letter} ${cell.number}`);
+    button.setAttribute("aria-label", cell.is_free ? "FREE" : `${cell.number}`);
 
     if (cell.marked) {
       button.classList.add("is-marked");
@@ -144,28 +405,69 @@ function renderCard(card) {
     if (cell.is_free) {
       button.classList.add("is-free");
     }
+    if (patternCells.has(patternCellKey(cell.row, cell.col))) {
+      button.classList.add("is-pattern");
+    }
 
-    button.innerHTML = `
-      <span class="bingo-cell-letter">${cell.letter}</span>
-      <strong>${cell.label}</strong>
-    `;
+    const label = document.createElement("strong");
+    label.textContent = cell.is_free ? "FREE" : cell.number;
+
+    button.addEventListener("click", () => run(async () => {
+      if (cell.is_free || !cell.number) {
+        return;
+      }
+      if (button.classList.contains("is-marked")) {
+        setGameMessage("Этот номер уже отмечен.");
+        return;
+      }
+      if (!currentDrawnNumbers.has(cell.number)) {
+        setGameMessage("Этот номер еще не выпадал.", "is-error");
+        return;
+      }
+
+      const result = await markNumber(cell.number);
+      renderCard(result.card);
+      setGameMessage(result.matched ? `Отмечено: ${cell.number}.` : "Такого номера нет в карточке.");
+    }));
+
+    button.appendChild(label);
     bingoCard.appendChild(button);
   });
 
   const marked = card.cells.flat().filter((cell) => cell.marked).length;
-  cardOwner.textContent = `Игрок ${card.user_id}`;
+  cardOwner.textContent = getCurrentDisplayName() || `Игрок ${card.user_id}`;
   markedCounter.textContent = `${marked} отмечено`;
-  cardActionButton.querySelector("span").textContent = "Открыть карточку";
-  claimBingoButton.disabled = false;
-  markLastBallButton.disabled = !lastBallNumber;
+  cardActionButton.classList.add("is-hidden");
+  claimBingoButton.disabled = busy || claimPending || isRoomFinished();
+  renderCombinations(card);
+  updateCardAvailability();
 }
 
 function renderGameState(state) {
   lastBallNumber = state.last_ball?.number || null;
-  gameStatusValue.textContent = state.is_active ? "Игра идет" : "Игра не запущена";
-  lastBallValue.textContent = state.last_ball?.label || "...";
-  drawnCountValue.textContent = `${state.drawn_count || 0} выпало`;
-  markLastBallButton.disabled = !lastBallNumber || !currentCard;
+  currentDrawnNumbers = new Set((state.drawn_balls || []).map((ball) => ball.number).filter(Boolean));
+  if (isRoomFinished()) {
+    gameStatusValue.textContent = "Завершена";
+    gameStatusValue.classList.remove("is-active");
+    gameStatusValue.classList.add("is-finished");
+  } else {
+    gameStatusValue.textContent = state.is_active ? "Игра идет" : "Ожидание";
+    gameStatusValue.classList.toggle("is-active", Boolean(state.is_active));
+    gameStatusValue.classList.remove("is-finished");
+  }
+  lastBallValue.textContent = state.last_ball?.number || "...";
+  drawnCountValue.textContent = `${state.drawn_count || 0} из 75`;
+  drawBallButton.disabled = busy || !state.is_active || !isHost() || isRoomFinished();
+  claimBingoButton.disabled = busy || claimPending || !currentCard || isRoomFinished();
+  updateCardAvailability();
+}
+
+function setBusy(isBusy) {
+  busy = isBusy;
+  cardActionButton.disabled = isBusy;
+  drawBallButton.disabled = isBusy || !isHost() || isRoomFinished();
+  claimBingoButton.disabled = isBusy || claimPending || !currentCard || isRoomFinished();
+  updateCardAvailability();
 }
 
 async function run(action) {
@@ -173,37 +475,57 @@ async function run(action) {
     return;
   }
 
-  busy = true;
+  setBusy(true);
   try {
     await action();
   } catch (error) {
     setGameMessage(error.message, "is-error");
+    if (error.message.includes("войти") || error.message.includes("Сессия")) {
+      setTimeout(() => {
+        window.location.href = LOGIN_PAGE_URL;
+      }, 650);
+    }
   } finally {
-    busy = false;
+    setBusy(false);
   }
 }
 
-cardActionButton.addEventListener("click", () => run(async () => {
+async function openOrCreateCard() {
   try {
     setGameMessage("Открываем карточку...");
     renderCard(await loadCard());
-    setGameMessage("Карточка открыта.");
+    setGameMessage(isHost() ? "Карточка готова. Вы достаете шары для комнаты." : "Карточка готова. Ждем шар от хоста.");
   } catch (error) {
-    if (!String(error.message).includes("Card not found")) {
+    if (!String(error.message).toLowerCase().includes("card not found") && !String(error.message).includes("Карточка")) {
       throw error;
     }
+
     setGameMessage("Создаем карточку...");
     renderCard(await createCard());
-    setGameMessage("Карточка создана.");
+    setGameMessage(isHost() ? "Карточка создана. Вы достаете шары для комнаты." : "Карточка создана. Ждем шар от хоста.");
   }
-
-  await refreshGameState();
-}));
+}
 
 async function refreshGameState() {
   const state = await loadGameState();
   renderGameState(state);
   return state;
+}
+
+async function refreshRoomState() {
+  const room = await loadRoom();
+  renderRoomState(room);
+
+  if (room.status === "finished") {
+    const winner = await loadWinner().catch(() => null);
+    renderWinner(winner);
+    setGameMessage(
+      winner ? `Игра завершена. Победитель: ${playerName(winner.user_id)}.` : "Игра завершена.",
+      "is-success",
+    );
+  }
+
+  return room;
 }
 
 function startAutoRefresh() {
@@ -212,42 +534,59 @@ function startAutoRefresh() {
   }
 
   autoRefreshTimer = window.setInterval(() => {
+    refreshRoomState().catch(() => {});
     refreshGameState().catch(() => {
-      gameStatusValue.textContent = "Нет игры";
+      gameStatusValue.textContent = "Ожидание";
+      gameStatusValue.classList.remove("is-active");
     });
   }, 2000);
 }
 
-refreshStateButton.addEventListener("click", () => run(async () => {
-  await refreshGameState();
-  setGameMessage("Шар обновлен.");
+cardActionButton.addEventListener("click", () => run(async () => {
+  await openOrCreateCard();
+  await refreshGameState().catch(() => {});
 }));
 
-markLastBallButton.addEventListener("click", () => run(async () => {
-  if (!lastBallNumber) {
-    throw new Error("Шар еще не выпал.");
+drawBallButton.addEventListener("click", () => run(async () => {
+  if (!isHost()) {
+    throw new Error("Шары достает только хост комнаты.");
   }
 
-  const result = await markNumber(lastBallNumber);
-  renderCard(result.card);
-  setGameMessage(result.matched ? "Шар отмечен." : "Этого номера нет в карточке.");
+  const ball = await drawBall();
+  await refreshRoomState().catch(() => {});
+  await refreshGameState();
+  setGameMessage(`Достали шар ${ball.number}.`);
 }));
 
 claimBingoButton.addEventListener("click", () => run(async () => {
   if (!currentCard) {
-    throw new Error("Сначала создайте карточку.");
+    throw new Error("Сначала откройте карточку.");
   }
 
   const claim = await submitWinnerClaim();
-  setGameMessage(`Заявка отправлена: ${claim.status}.`);
+  startClaimPolling(claim.claim_id);
 }));
 
 renderGameId();
-if (currentGameId) {
-  refreshGameState().then(startAutoRefresh).catch(() => {
-    setGameMessage("Создайте карточку, когда хост запустит игру.", "is-success");
+
+if (!getToken()) {
+  setGameMessage("Нужно войти в аккаунт.", "is-error");
+  setTimeout(() => {
+    window.location.href = LOGIN_PAGE_URL;
+  }, 650);
+} else if (!currentGameId) {
+  setGameMessage("Сначала откройте лобби и выберите комнату.", "is-error");
+  setTimeout(() => {
+    window.location.href = LOBBY_PAGE_URL;
+  }, 900);
+} else {
+  localStorage.setItem("bingo_game_id", currentGameId);
+  run(async () => {
+    await refreshRoomState();
+    await openOrCreateCard();
+    await refreshGameState().catch(() => {
+      setGameMessage(isHost() ? "Запустите игру в комнате, затем доставайте шары." : "Карточка готова. Ждем запуска игры.");
+    });
     startAutoRefresh();
   });
-} else {
-  setGameMessage("Сначала откройте лобби и создайте комнату.", "is-error");
 }

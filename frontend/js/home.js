@@ -15,7 +15,7 @@ function renderHomeUser(user) {
     return;
   }
 
-  homeStatus.textContent = `${user.username}, выберите комнату и переходите к карточке.`;
+  homeStatus.textContent = `${user.username}, выберите комнату или создайте новую игру.`;
 }
 
 async function loadHomeUser() {

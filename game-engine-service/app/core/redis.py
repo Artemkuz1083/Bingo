@@ -32,3 +32,7 @@ def key_started_at(room_id: str) -> str:
 # List всех игроков комнаты
 def key_players(room_id: str) -> str:
     return f"{_prefix(room_id)}:players"
+
+
+def key_pool(room_id: str) -> str:
+    return f"{_prefix(room_id)}:pool"

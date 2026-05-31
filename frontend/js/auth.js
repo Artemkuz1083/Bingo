@@ -6,7 +6,11 @@ const registerMessage = document.querySelector("#registerMessage");
 const loginForm = document.querySelector("#loginForm");
 const loginMessage = document.querySelector("#loginMessage");
 
-function setFormMessage(element, text, type) {
+function setFormMessage(element, text, type = "is-success") {
+  if (!element) {
+    return;
+  }
+
   element.classList.remove("is-error", "is-success");
   element.textContent = text;
   element.classList.add(type);
@@ -15,6 +19,16 @@ function setFormMessage(element, text, type) {
 function saveAuthSession(authResponse) {
   localStorage.setItem("bingo_access_token", authResponse.token.access_token);
   localStorage.setItem("bingo_user", JSON.stringify(authResponse.user));
+}
+
+async function readResponse(response) {
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    throw new Error(data.detail || "Сервис авторизации вернул ошибку.");
+  }
+
+  return data;
 }
 
 async function sendAuthRequest(path, payload) {
@@ -26,17 +40,17 @@ async function sendAuthRequest(path, payload) {
     body: JSON.stringify(payload),
   });
 
-  const data = await response.json().catch(() => ({}));
-
-  if (!response.ok) {
-    throw new Error(data.detail || "Сервис авторизации вернул ошибку.");
-  }
-
-  return data;
+  return readResponse(response);
 }
 
 function redirectHome() {
   window.location.href = HOME_PAGE_URL;
+}
+
+function setSubmitting(form, isSubmitting) {
+  form.querySelectorAll("button, input").forEach((element) => {
+    element.disabled = isSubmitting;
+  });
 }
 
 if (registerForm && registerMessage) {
@@ -49,26 +63,20 @@ if (registerForm && registerMessage) {
     const password = String(formData.get("password") || "");
 
     if (!username || !email || password.length < 6) {
-      setFormMessage(
-        registerMessage,
-        "Заполни все поля. Пароль минимум 6 символов.",
-        "is-error",
-      );
+      setFormMessage(registerMessage, "Заполните все поля. Пароль должен быть не короче 6 символов.", "is-error");
       return;
     }
 
+    setSubmitting(registerForm, true);
     try {
-      setFormMessage(registerMessage, "Создаем аккаунт...", "is-success");
-      const authResponse = await sendAuthRequest("/auth/register", {
-        username,
-        email,
-        password,
-      });
+      setFormMessage(registerMessage, "Создаем аккаунт...");
+      const authResponse = await sendAuthRequest("/auth/register", { username, email, password });
       saveAuthSession(authResponse);
-      setFormMessage(registerMessage, "Аккаунт создан. Перенаправляем...", "is-success");
-      setTimeout(redirectHome, 450);
+      setFormMessage(registerMessage, "Аккаунт создан. Открываем главную...");
+      setTimeout(redirectHome, 350);
     } catch (error) {
       setFormMessage(registerMessage, error.message, "is-error");
+      setSubmitting(registerForm, false);
     }
   });
 }
@@ -82,25 +90,20 @@ if (loginForm && loginMessage) {
     const password = String(formData.get("password") || "");
 
     if (!email || password.length < 6) {
-      setFormMessage(
-        loginMessage,
-        "Введи email и пароль минимум из 6 символов.",
-        "is-error",
-      );
+      setFormMessage(loginMessage, "Введите email и пароль не короче 6 символов.", "is-error");
       return;
     }
 
+    setSubmitting(loginForm, true);
     try {
-      setFormMessage(loginMessage, "Проверяем доступ...", "is-success");
-      const authResponse = await sendAuthRequest("/auth/login", {
-        email,
-        password,
-      });
+      setFormMessage(loginMessage, "Проверяем доступ...");
+      const authResponse = await sendAuthRequest("/auth/login", { email, password });
       saveAuthSession(authResponse);
-      setFormMessage(loginMessage, "Доступ подтвержден. Перенаправляем...", "is-success");
-      setTimeout(redirectHome, 450);
+      setFormMessage(loginMessage, "Вход выполнен. Открываем главную...");
+      setTimeout(redirectHome, 350);
     } catch (error) {
       setFormMessage(loginMessage, error.message, "is-error");
+      setSubmitting(loginForm, false);
     }
   });
 }

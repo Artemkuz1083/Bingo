@@ -7,13 +7,14 @@
 
 - JWT уже появился в `auth-service`.
 - `user_id` лежит в claim `sub`.
+- Отображаемое имя игрока берется из JWT claim `username`, а для старых токенов может временно прийти в `X-User-Name`.
 - `lobby-service` уже умеет читать `Authorization: Bearer <token>`.
 - Заголовок `X-User-Id` оставлен только как временный fallback для ручного тестирования, пока frontend полностью не перейдет на JWT.
 
 ## game-engine-service
 
-- Когда хост запускает игру через `POST /rooms/{room_id}/start`, надо будет сообщать об этом в `game-engine-service`.
-- Скорее всего, туда надо передавать `room_id`, чтобы он начал генерировать шары для этой комнаты.
+- Когда хост запускает игру через `POST /rooms/{room_id}/start`, `lobby-service` сообщает об этом в `game-engine-service`.
+- Шары больше не выпадают по таймеру: хост достает следующий шар через `POST /rooms/{room_id}/draw`, а `lobby-service` проксирует это в `game-engine-service`.
 - Статус комнаты все равно должен менять только `lobby-service`, а не `game-engine-service`.
 
 ## card-service
@@ -44,6 +45,6 @@
 
 - When a host starts a room, `lobby-service` can notify game engine with `POST {LOBBY_GAME_ENGINE_SERVICE_URL}/game/{room_id}/start`.
 - The notification payload is `room_id` and `player_user_ids`.
-- `LOBBY_GAME_ENGINE_SERVICE_URL` is optional for now because the current compose file does not run a working `game-engine-service` container yet.
+- When a host draws a ball, `lobby-service` calls `POST {LOBBY_GAME_ENGINE_SERVICE_URL}/game/{room_id}/draw`.
 - `winner-service` can finish an active room with `POST /internal/rooms/{room_id}/finish`.
 - This internal endpoint requires `X-Internal-Service-Token: <INTERNAL_SERVICE_TOKEN>`.

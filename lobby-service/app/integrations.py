@@ -28,4 +28,16 @@ def notify_game_finished(room: Room) -> None:
         response = client.post(
             f"{settings.game_engine_service_url}/game/{room.id}/stop",
         )
+        if response.status_code == 404:
+            return
         response.raise_for_status()
+
+
+def draw_game_ball(room: Room) -> dict:
+    if not settings.game_engine_service_url:
+        raise RuntimeError("Game engine service URL is not configured")
+
+    with httpx.Client(timeout=settings.http_timeout_seconds) as client:
+        response = client.post(f"{settings.game_engine_service_url}/game/{room.id}/draw")
+        response.raise_for_status()
+        return response.json()

@@ -1,40 +1,36 @@
-import asyncio
 import logging
 import time
 
-import redis.asyncio as aioredis
 from app.core.config import settings
-
-from app.engine.balls import build_shuffle_pool, parse_ball, letter
+from app.engine.balls import build_shuffle_pool, parse_ball
 from app.core.redis import (
     redis_client,
     key_active,
     key_drawn,
     key_last,
-    key_started_at, key_players,
+    key_started_at,
+    key_players,
+    key_pool,
 )
 
 logger = logging.getLogger(__name__)
 
 
-_tasks: dict[str, asyncio.Task] = {}
-
 # True - игра успешно создана
 # False - игра уже создана
 async def start_game(room_id: str, player_user_ids: list[str]) -> bool:
-    if room_id in _tasks and not _tasks[room_id].done():
+    if await redis_client.get(key_active(room_id)) == "1":
         return False
 
-    await redis_client.delete(key_drawn(room_id), key_last(room_id), key_players(room_id))
+    await redis_client.delete(key_drawn(room_id), key_last(room_id), key_players(room_id), key_pool(room_id))
     await redis_client.set(key_active(room_id), "1")
     await redis_client.set(key_started_at(room_id), str(int(time.time())))
+    await redis_client.rpush(key_pool(room_id), *build_shuffle_pool())
 
     if player_user_ids:
         await redis_client.rpush(key_players(room_id), *player_user_ids)
 
-    task = asyncio.create_task(_draw_loop(room_id), name=f"draw-loop-{room_id}")
-    _tasks[room_id] = task
-    logger.info(f"Комната {room_id}: игра началась!")
+    logger.info(f"Комната {room_id}: игра началась, шары ждут ручной выдачи")
     return True
 
 # True - игра успешно остановлена
@@ -46,6 +42,35 @@ async def stop_game(room_id: str) -> bool:
     await redis_client.set(key_active(room_id), "0")
     logger.info(f"Комната {room_id}: получена команда остановки")
     return True
+
+
+async def draw_ball(room_id: str) -> dict | None:
+    active = await redis_client.get(key_active(room_id))
+    if active != "1":
+        return None
+
+    label = await redis_client.lpop(key_pool(room_id))
+    if label is None:
+        await redis_client.set(key_active(room_id), "0")
+        return None
+
+    order = await redis_client.zcard(key_drawn(room_id)) + 1
+    async with redis_client.pipeline(transaction=True) as pipe:
+        pipe.zadd(key_drawn(room_id), {label: order})
+        pipe.set(key_last(room_id), label)
+        if order == 75:
+            pipe.set(key_active(room_id), "0")
+        await pipe.execute()
+
+    ball_letter, number = parse_ball(label)
+    ball = {"label": label, "letter": ball_letter, "number": number, "order": order}
+    logger.info(f"Комната {room_id}: хост достал шар {label} ({order})")
+
+    await redis_client.publish(
+        f"{settings.redis_key_prefix}:room:{room_id}:ball_drawn",
+        f'{{"room_id":"{room_id}","label":"{label}","letter":"{ball_letter}","number":{number},"order":{order}}}',
+    )
+    return ball
 
 async def get_state(room_id: str) -> dict:
     drawn_with_scores = await redis_client.zrange(key_drawn(room_id), 0, -1, withscores=True)
@@ -80,40 +105,3 @@ async def get_state(room_id: str) -> dict:
         "player_user_ids": players,
     }
 
-async def _draw_loop(room_id: str, redis: aioredis.Redis | None = None):
-    if redis is None:
-        redis = redis_client
-
-    pool = build_shuffle_pool()
-    interval = settings.draw_interval_seconds
-
-    for order, label in enumerate(pool, start=1):
-        active = await redis.get(key_active(room_id))
-        if active != "1":
-            logger.info(f"Комната {room_id}: была остановлена после команды stop.")
-            break
-
-        async with redis.pipeline(transaction=True) as pipe:
-            pipe.zadd(key_drawn(room_id), {label: order})
-            pipe.set(key_last(room_id), label)
-            await pipe.execute()
-
-        letter, number = parse_ball(label)
-        logger.info(f"Комната {room_id}: выпал шар {label} ({order})")
-
-        await redis.publish(
-            f"{settings.redis_key_prefix}:room:{room_id}:ball_drawn",
-            f'{{'
-            f'"room_id":"{room_id}",'
-            f'"label":"{label}",'
-            f'"letter":"{letter}",'
-            f'"number":{number},'
-            f'"order":{order}}}',
-        )
-
-        if order == 75:
-            await redis.set(key_active(room_id), "0")
-            logger.info(f"Комната {room_id}: все 75 шаров выпали, игра закончена")
-            break
-
-        await asyncio.sleep(interval)

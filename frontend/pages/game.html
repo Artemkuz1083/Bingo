@@ -3,15 +3,15 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>BINGO // Игра</title>
+    <title>BINGO | Игра</title>
     <link rel="stylesheet" href="../css/styles.css" />
   </head>
-  <body class="register-page game-page">
+  <body>
     <main class="game-shell">
       <section class="game-board-layout simple-game-layout" aria-label="Игра BINGO">
         <header class="game-header">
           <div>
-            <div class="auth-kicker">BINGO NETWORK // GAME</div>
+            <div class="auth-kicker">BINGO</div>
             <h1 class="game-title">Игра</h1>
           </div>
           <a class="game-link" href="./lobby.html">Комната</a>
@@ -23,12 +23,13 @@
             <span id="markedCounter">0 отмечено</span>
           </div>
 
-          <div class="bingo-card" id="bingoCard" aria-label="Карточка BINGO">
-            <div class="bingo-letter">B</div>
-            <div class="bingo-letter">I</div>
-            <div class="bingo-letter">N</div>
-            <div class="bingo-letter">G</div>
-            <div class="bingo-letter">O</div>
+          <div class="bingo-card" id="bingoCard" aria-label="Карточка BINGO"></div>
+
+          <div class="combo-panel" aria-label="Комбинации BINGO">
+            <div class="combo-title">Комбинации</div>
+            <div class="combo-list" id="comboList">
+              <span>Откройте карточку</span>
+            </div>
           </div>
         </section>
 
@@ -45,20 +46,21 @@
             <small id="drawnCountValue">0 выпало</small>
           </div>
 
+          <div class="winner-line is-hidden" id="winnerLine">
+            <span>Победитель</span>
+            <strong id="winnerValue">...</strong>
+          </div>
+
           <button class="auth-button game-button" id="cardActionButton" type="button">
-            <span>Создать карточку</span>
+            <span>Открыть карточку</span>
           </button>
 
-          <button class="auth-button game-button game-button-secondary" id="refreshStateButton" type="button">
-            <span>Обновить шар</span>
-          </button>
-
-          <button class="auth-button game-button" id="markLastBallButton" type="button" disabled>
-            <span>Отметить шар</span>
+          <button class="auth-button game-button game-button-secondary is-hidden" id="drawBallButton" type="button">
+            <span>Достать шар</span>
           </button>
 
           <button class="auth-button game-button game-button-secondary" id="claimBingoButton" type="button" disabled>
-            <span>BINGO</span>
+            <span>Заявить BINGO</span>
           </button>
 
           <p class="auth-message game-message" id="gameMessage" aria-live="polite"></p>
@@ -66,7 +68,7 @@
       </section>
     </main>
 
-    <script src="../js/api.js?v=ngrok-1"></script>
-    <script src="../js/game.js?v=ngrok-1"></script>
+    <script src="../js/api.js?v=ui-3"></script>
+    <script src="../js/game.js?v=ui-3"></script>
   </body>
 </html>

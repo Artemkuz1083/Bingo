@@ -13,6 +13,9 @@ class RoomStatus(str, Enum):
     FINISHED = "finished"
 
 
+DEFAULT_WINNING_PATTERN = "top_row"
+
+
 class Room(Base):
     __tablename__ = "rooms"
 
@@ -23,6 +26,11 @@ class Room(Base):
         nullable=False,
         default=RoomStatus.WAITING.value,
         index=True,
+    )
+    winning_pattern: Mapped[str] = mapped_column(
+        String(32),
+        nullable=False,
+        default=DEFAULT_WINNING_PATTERN,
     )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
@@ -57,6 +65,7 @@ class RoomPlayer(Base):
         index=True,
     )
     user_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    display_name: Mapped[str] = mapped_column(String(80), nullable=False)
     joined_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),
