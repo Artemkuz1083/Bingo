@@ -5,6 +5,7 @@ from app.schemas.winners import WinnerClaimMessage
 from app.services.evaluator import has_bingo
 from app.services.integrations import (
     fetch_game_state,
+    fetch_lobby_room,
     fetch_winner_check_data,
     finish_lobby_room,
     reward_winner,
@@ -24,6 +25,7 @@ async def process_winner_claim(
             token=payload.token,
         )
         game_state = await fetch_game_state(payload.game_id)
+        lobby_room = await fetch_lobby_room(payload.game_id)
     except httpx.HTTPError as exc:
         await storage.update_claim(
             payload.claim_id,
@@ -32,11 +34,11 @@ async def process_winner_claim(
         )
         return
 
-    if not has_bingo(card, game_state.drawn_balls):
+    if not has_bingo(card, game_state.drawn_balls, lobby_room.winning_pattern):
         await storage.update_claim(
             payload.claim_id,
             "rejected",
-            reason="No completed BINGO line",
+            reason="Selected BINGO pattern is not completed",
         )
         return
 

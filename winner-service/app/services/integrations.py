@@ -3,7 +3,7 @@ from decimal import Decimal
 import httpx
 
 from app.core.config import settings
-from app.schemas.winners import GameState, WinnerCheckData
+from app.schemas.winners import GameState, LobbyRoom, WinnerCheckData
 
 
 def auth_headers(token: str) -> dict[str, str]:
@@ -30,6 +30,13 @@ async def fetch_game_state(game_id: str) -> GameState:
         )
         response.raise_for_status()
         return GameState.model_validate(response.json())
+
+
+async def fetch_lobby_room(game_id: str) -> LobbyRoom:
+    async with httpx.AsyncClient(timeout=settings.http_timeout_seconds) as client:
+        response = await client.get(f"{settings.lobby_service_url}/rooms/{game_id}")
+        response.raise_for_status()
+        return LobbyRoom.model_validate(response.json())
 
 
 async def reward_winner(

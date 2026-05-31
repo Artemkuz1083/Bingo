@@ -14,6 +14,21 @@ ClaimStatus = Literal[
     "reward_failed",
 ]
 
+WinningPattern = Literal[
+    "top_row",
+    "middle_row",
+    "bottom_row",
+    "left_column",
+    "middle_column",
+    "right_column",
+    "main_diagonal",
+    "anti_diagonal",
+    "four_corners",
+    "x_shape",
+    "plus_shape",
+    "small_frame",
+]
+
 
 class ClaimResponse(BaseModel):
     claim_id: str
@@ -63,5 +78,12 @@ class WinnerCheckData(BaseModel):
 class GameState(BaseModel):
     room_id: str
     is_active: bool | None = None
-    last_ball: str | int | None = None
+    last_ball: str | int | dict | None = None
     drawn_balls: list[str | int | dict] = Field(default_factory=list)
+
+
+class LobbyRoom(BaseModel):
+    id: int
+    host_user_id: str
+    status: str
+    winning_pattern: WinningPattern = "top_row"
